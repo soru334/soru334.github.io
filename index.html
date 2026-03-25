@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#d2a01b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="秒給メーター" />
+  <title>秒給メーター</title>
+  <style>
+    :root{
+      --bg:#f5f7fc; --card:#fff; --text:#1a2438; --muted:#74809d; --line:#e6ebf6;
+      --gold:#5b76df; --gold2:#7da3ff; --gold-soft:#edf2ff;
+      --green:#35b45d; --red:#ef6b74; --blue:#4f7cff;
+      --shadow:0 14px 36px rgba(29,42,80,.08); --radius:24px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(180deg,#f5f7fc 0%,#eef3ff 100%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif}
+    body{padding:env(safe-area-inset-top) 14px calc(28px + env(safe-area-inset-bottom))}
+    .wrap{max-width:980px;margin:0 auto}
+    .header{padding:10px 2px 14px}
+    .titleRow{display:flex;align-items:center;gap:12px}
+    .logo{width:54px;height:54px;border-radius:16px;background:#edf2ff;display:flex;align-items:center;justify-content:center;font-size:28px}
+    .title{font-size:34px;font-weight:900;color:#4a63c7}
+    .sub{color:var(--muted);line-height:1.7;margin-top:10px}
+    .grid{display:grid;gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .hero{
+      background:
+        radial-gradient(circle at 12% 18%, rgba(255,255,255,.34) 0 5px, transparent 7px),
+        radial-gradient(circle at 28% 12%, rgba(255,255,255,.28) 0 3px, transparent 5px),
+        radial-gradient(circle at 76% 18%, rgba(255,255,255,.30) 0 4px, transparent 6px),
+        radial-gradient(circle at 88% 28%, rgba(255,255,255,.26) 0 3px, transparent 5px),
+        linear-gradient(180deg,#6f8eff 0%,#5b76df 52%,#46b9e8 100%);
+      border:none;overflow:hidden;position:relative;color:#fff;padding:18px;
+    }
+    .hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.10)}
+    .hero:before{width:220px;height:220px;right:-70px;top:-60px}
+    .hero:after{width:180px;height:180px;left:-60px;bottom:-70px}
+    .heroHeader{text-align:center;position:relative;z-index:1}
+    .heroTitlePill{
+      display:inline-flex;align-items:center;gap:10px;background:rgba(50,78,170,.22);
+      border:1px solid rgba(255,255,255,.20);padding:16px 26px;border-radius:999px;font-size:18px;font-weight:900
+    }
+    .heroCenter{
+      position:relative;z-index:1;background:rgba(255,255,255,.95);border-radius:36px;padding:18px 18px 26px;
+      margin:18px auto 16px;max-width:760px;color:#4a63c7;text-align:center;border:1px solid rgba(255,255,255,.8)
+    }
+    .statusPill{
+      display:inline-flex;align-items:center;gap:8px;background:#f3f3f3;border:1px solid #ddd;border-radius:999px;
+      padding:8px 16px;color:#6b6b6b;font-weight:900;font-size:14px
+    }
+    .statusDot{width:10px;height:10px;border-radius:50%;background:#7ac66c}
+    .statusPill.idle .statusDot{background:#c7c7c7}
+    .heroMoney{font-size:clamp(46px,8vw,72px);font-weight:900;line-height:1.05;margin:20px 0 0;font-variant-numeric:tabular-nums}
+    .heroBottom{
+      position:relative;z-index:1;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;background:rgba(50,78,170,.18);
+      border:1px solid rgba(255,255,255,.18);border-radius:28px;padding:18px 16px;font-size:24px;font-weight:900
+    }
+    .heroMeta{position:relative;z-index:1;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+    .heroBadge{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.18);font-size:13px;font-weight:800}
+    .sectionHead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .sectionTitle{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:900;color:#4a63c7}
+    .sectionIcon{width:42px;height:42px;border-radius:14px;background:#edf2ff;display:flex;align-items:center;justify-content:center;font-size:22px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    button{
+      border:none;border-radius:16px;padding:13px 16px;font-size:15px;font-weight:900;cursor:pointer;background:#edf2ff;color:#4158b8
+    }
+    button.primary{background:linear-gradient(180deg,#6f8eff,#5b76df);color:#fff}
+    button.greenBtn{background:#3ab35d;color:#fff}
+    button.redBtn{background:#f56d73;color:#fff}
+    button.ghost{background:#faf8f2;color:#746b5b;border:1px solid var(--line)}
+    .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    @media (min-width:720px){
+      .stats.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+      .inputs.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .inputs.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    }
+    .stat{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fffdf7}
+    .stat .k{font-size:13px;color:var(--muted);margin-bottom:8px}
+    .stat .v{font-size:27px;font-weight:900;font-variant-numeric:tabular-nums}
+    .stat .v.small{font-size:22px}
+    .green{color:var(--green)} .red{color:var(--red)}
+    .inputs{display:grid;gap:12px}
+    .field{display:grid;gap:7px}
+    .field label{font-size:13px;color:var(--muted)}
+    input,select{
+      width:100%;border:1px solid var(--line);background:#fff;border-radius:16px;padding:13px 14px;
+      font-size:16px;color:var(--text);outline:none
+    }
+    input:focus,select:focus{border-color:#b9c9ff;box-shadow:0 0 0 4px #eef3ff}
+    .note{font-size:12px;color:var(--muted);line-height:1.7}
+    .row{display:flex;justify-content:space-between;gap:14px;align-items:center}
+    .mini{font-size:13px} .muted{color:var(--muted)}
+    .weekdayRow{display:flex;gap:8px;flex-wrap:wrap}
+    .dayChip{
+      padding:9px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;color:#7a6d55;font-size:13px;font-weight:900;cursor:pointer
+    }
+    .dayChip.active{background:#ffeeb2;border-color:#f0d46d;color:#a37000}
+    .salaryPreview{
+      border:1px solid #dbe4ff;border-radius:28px;background:linear-gradient(180deg,#f8fbff 0%,#edf3ff 100%);
+      box-shadow:0 20px 44px rgba(70,104,200,.10);padding:18px;margin-top:4px
+    }
+    .salaryBadge{
+      display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:18px;background:#fff;
+      border:1px solid #dbe4ff;color:#4a63c7;font-size:18px;font-weight:900
+    }
+    .salaryInfoCard{background:#fff;border-radius:26px;padding:18px;border:1px solid #e6ebf6;display:grid;gap:12px;margin-top:14px}
+    .salaryInfoRow{display:flex;align-items:center;gap:12px;color:#5b5547;font-size:18px}
+    .salaryInfoIcon{width:40px;height:40px;border-radius:12px;background:#edf2ff;display:flex;align-items:center;justify-content:center;font-size:20px}
+    .salaryBottomRate{background:#f6f9ff;border-radius:14px;padding:10px 12px;color:#4a63c7;font-weight:900;font-size:18px;border:1px solid #dbe4ff}
+    .progress{width:100%;height:14px;background:#f0f4ff;border-radius:999px;overflow:hidden;border:1px solid #dfe7ff}
+    .bar{height:100%;width:0%;background:linear-gradient(90deg,#70d6bc,#5a8bff)}
+    .chipRow{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px;color:#50607d;cursor:pointer}
+    .chip.active{background:#edf2ff;border-color:#cbd7ff;color:#4158b8;font-weight:900}
+    .list{display:grid;gap:10px}
+    .item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px 14px;border-radius:18px;border:1px solid var(--line);background:#fff}
+    .meta{display:grid;gap:5px}
+    .name{font-weight:900}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;background:#f8f6ef;color:#746b5b;border:1px solid #efe5c8}
+    .amount{font-weight:900;font-variant-numeric:tabular-nums}
+    .empty{padding:22px;border:1px dashed #d5dced;border-radius:18px;text-align:center;color:var(--muted);background:#fbfcff}
+    .summaryList{display:grid;gap:10px}
+    .summaryItem{display:grid;gap:8px;padding:12px 13px;border-radius:16px;background:#fff;border:1px solid var(--line)}
+    .barLine{height:10px;border-radius:999px;background:#f7f2df;overflow:hidden}
+    .barFill{height:100%;background:linear-gradient(90deg,#ffb65c,#ff7e7e)}
+    .tagIncome{background:#eef9f1;color:#0a7b52} .tagExpense{background:#fff0f2;color:#bf314b} .tagAuto{background:#fff7e8;color:#a86a00}
+    .iconBubble{
+      width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:17px;background:#f4f7ff;border:1px solid var(--line)
+    }
+    .iconLine{display:flex;align-items:center;gap:10px}
+    .calendarHeader{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+    .calendarTitle{font-size:18px;font-weight:900}
+    .calendarGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+    .dow{text-align:center;font-size:12px;color:var(--muted);padding:4px 0}
+    .day{min-height:110px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:8px;display:grid;gap:6px;align-content:start}
+    .day.mutedCell{background:#faf9f5;color:#b4ad9d}
+    .day.today{border-color:#bcd0ff;box-shadow:inset 0 0 0 2px #ecf2ff}
+    .dayNum{font-size:12px;font-weight:900}
+    .daySummary{font-size:11px;font-weight:900}
+    .daySummary.exp{color:var(--red)} .daySummary.inc{color:var(--green)}
+    .dayEntries{display:grid;gap:4px}
+    .dayEntry{font-size:10px;line-height:1.3;padding:4px 6px;border-radius:10px;background:#f6f8ff;border:1px solid #eef2fb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dayEntry.expense{background:#fff4f6} .dayEntry.income{background:#eefaf5} .dayEntry.auto{background:#fff8ea}
+    .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .footerNote{font-size:12px;color:var(--muted);line-height:1.7;padding:6px 2px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="header">
+      <div class="titleRow">
+        <div class="logo">💰</div>
+        <div class="title">秒給メーター</div>
+      </div>
+      <div class="sub">給料設定を秒給メーター風に寄せつつ、銀行残高を基準に増減するようにした版です。</div>
+    </header>
+
+    <section class="card hero">
+      <div class="heroHeader">
+        <div class="heroTitlePill">📈 今月の積み上げ給料</div>
+      </div>
+      <div class="heroCenter">
+        <div id="statusPill" class="statusPill"><span class="statusDot"></span><span id="statusText">稼働中</span></div>
+        <div id="cycleAccruedHero" class="heroMoney">¥0</div>
+      </div>
+      <div class="heroBottom">🕒 <span id="perSecHero">¥0</span> / 秒</div>
+      <div class="heroMeta">
+        <div class="heroBadge">銀行残高: <span id="balanceHero">¥0</span></div>
+        <div class="heroBadge">給料日: 毎月 <span id="paydayHero">25</span> 日</div>
+        <div class="heroBadge">初期銀行残高: <span id="bankStartHero">¥0</span></div>
+      </div>
+    </section>
+
+    <div class="grid" style="margin-top:14px">
+      <section class="card">
+        <div class="sectionHead">
+          <div class="sectionTitle"><span class="sectionIcon">💼</span> 給料設定</div>
+          <div class="actions">
+            <button class="primary" id="saveSalarySettings">設定を保存</button>
+            <button class="ghost" id="seedDemo">サンプル追加</button>
+          </div>
+        </div>
+
+        <div class="inputs three" style="margin-top:14px">
+          <div class="field">
+            <label for="monthSalary">月給（円）</label>
+            <input id="monthSalary" inputmode="numeric" placeholder="例: 172386">
+          </div>
+          <div class="field">
+            <label for="payday">給料日（毎月）</label>
+            <select id="payday"></select>
+          </div>
+          <div class="field">
+            <label for="bankStartBalance">初期銀行残高（円）</label>
+            <input id="bankStartBalance" inputmode="numeric" placeholder="例: 30000">
+          </div>
+        </div>
+
+        <div class="inputs two">
+          <div class="field">
+            <label for="workStart">勤務開始</label>
+            <input id="workStart" type="time">
+          </div>
+          <div class="field">
+            <label for="workEnd">勤務終了</label>
+            <input id="workEnd" type="time">
+          </div>
+        </div>
+
+        <div class="inputs two">
+          <div class="field">
+            <label for="breakStart">休憩開始</label>
+            <input id="breakStart" type="time">
+          </div>
+          <div class="field">
+            <label for="breakEnd">休憩終了</label>
+            <input id="breakEnd" type="time">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>勤務曜日</label>
+          <div class="weekdayRow" id="weekdayRow"></div>
+        </div>
+
+        <div class="salaryPreview">
+          <div class="salaryBadge">月給: <span id="salaryBadgeMonth">¥0</span></div>
+          <div class="salaryInfoCard">
+            <div class="salaryInfoRow"><span class="salaryInfoIcon">🕒</span> <span id="previewWorkTime">08:30 - 17:30</span></div>
+            <div class="salaryInfoRow"><span class="salaryInfoIcon">📅</span> <span id="previewWorkDays">月・火・水・木・金</span></div>
+            <div class="salaryInfoRow"><span class="salaryInfoIcon">☕</span> <span id="previewBreak">休憩: 12:00 - 13:00</span></div>
+            <div class="salaryInfoRow"><span class="salaryInfoIcon">💴</span> <span id="previewPayday">給料日: 毎月25日</span></div>
+            <div class="salaryInfoRow"><span class="salaryInfoIcon">🏦</span> <span id="previewBankStart">初期銀行残高: ¥0</span></div>
+            <div class="salaryBottomRate">秒給: <span id="previewPerSec">¥0</span></div>
+          </div>
+        </div>
+
+        <div class="note">銀行残高は「初期銀行残高 + 給与の積み上げ + 臨時収入 - 支出 - 固定費」で計算します。</div>
+      </section>
+
+      <section class="card">
+        <div class="sectionHead">
+          <div class="sectionTitle"><span class="sectionIcon">🎯</span> 目標</div>
+          <div class="actions"><button class="redBtn" id="clearAll">全部初期化</button></div>
+        </div>
+        <div class="inputs two" style="margin-top:14px">
+          <div class="field">
+            <label for="savingGoal">貯金目標（円）</label>
+            <input id="savingGoal" inputmode="numeric" placeholder="例: 500000">
+          </div>
+          <div class="field">
+            <label for="trackingStart">累計計算の基準日時</label>
+            <input id="trackingStart" type="datetime-local">
+          </div>
+        </div>
+        <div class="progress" style="margin-top:14px"><div id="goalBar" class="bar"></div></div>
+        <div class="row" style="margin-top:10px">
+          <div class="mini muted">貯金目標</div>
+          <div id="goalText" class="mini">¥0 / ¥0</div>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <div class="mini muted">目標まで残り</div>
+          <div id="goalRemain" class="mini">¥0</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>サマリー</h2>
+        <div class="stats four">
+          <div class="stat">
+            <div class="k">現在の銀行残高</div>
+            <div id="balanceStat" class="v small">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">累計給与獲得額</div>
+            <div id="totalEarnedStat" class="v small green">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">今月の支出</div>
+            <div id="spentThisMonth" class="v small red">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">今日増えた分</div>
+            <div id="earnedToday" class="v small green">¥0</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>支出・収入を追加</h2>
+        <div class="inputs three">
+          <div class="field">
+            <label for="txType">種類</label>
+            <select id="txType">
+              <option value="expense">支出</option>
+              <option value="income">臨時収入</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="txCategory">カテゴリ</label>
+            <select id="txCategory"></select>
+          </div>
+          <div class="field">
+            <label for="txAmount">金額（円）</label>
+            <input id="txAmount" inputmode="numeric" placeholder="例: 980">
+          </div>
+          <div class="field">
+            <label for="txName">内容</label>
+            <input id="txName" placeholder="例: コンビニ / ゲーム / フリマ売上">
+          </div>
+          <div class="field">
+            <label for="txDate">日時</label>
+            <input id="txDate" type="datetime-local">
+          </div>
+          <div class="field">
+            <label for="customCategory">新しいカテゴリ名（必要なら）</label>
+            <input id="customCategory" placeholder="例: プレゼント">
+          </div>
+        </div>
+        <div class="actions" style="margin-top:14px">
+          <button class="greenBtn" id="addTx">追加する</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>毎月の固定費</h2>
+        <div class="inputs three">
+          <div class="field">
+            <label for="fixedName">内容</label>
+            <input id="fixedName" placeholder="例: 家賃 / サブスク / 通信費">
+          </div>
+          <div class="field">
+            <label for="fixedCategory">カテゴリ</label>
+            <select id="fixedCategory"></select>
+          </div>
+          <div class="field">
+            <label for="fixedAmount">月額（円）</label>
+            <input id="fixedAmount" inputmode="numeric" placeholder="例: 12000">
+          </div>
+          <div class="field">
+            <label for="fixedDay">毎月の計上日</label>
+            <select id="fixedDay"></select>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:14px">
+          <button class="primary" id="addFixed">固定費を追加</button>
+        </div>
+        <div id="fixedList" class="list" style="margin-top:14px"></div>
+      </section>
+
+      <section class="card">
+        <h2>カテゴリ別</h2>
+        <div class="chipRow" id="summaryRangeChips">
+          <button class="chip active" data-range="month">今月</button>
+          <button class="chip" data-range="all">累計</button>
+        </div>
+        <div id="categorySummary" class="summaryList" style="margin-top:14px"></div>
+      </section>
+
+      <section class="card">
+        <div class="calendarHeader">
+          <div class="calendarTitle" id="calendarTitle">2026年3月</div>
+          <div class="actions">
+            <button class="ghost" id="prevMonth">前の月</button>
+            <button class="ghost" id="todayMonth">今月</button>
+            <button class="ghost" id="nextMonth">次の月</button>
+          </div>
+        </div>
+        <div class="calendarGrid" id="calendarDow"></div>
+        <div class="calendarGrid" id="calendarGrid"></div>
+        <div class="legend">
+          <span class="pill tagExpense">支出</span>
+          <span class="pill tagIncome">収入</span>
+          <span class="pill tagAuto">固定費</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>履歴</h2>
+        <div class="chipRow" id="historyFilterChips">
+          <button class="chip active" data-filter="all">すべて</button>
+          <button class="chip" data-filter="expense">支出のみ</button>
+          <button class="chip" data-filter="income">収入のみ</button>
+          <button class="chip" data-filter="auto">固定費のみ</button>
+        </div>
+        <div id="historyList" class="list" style="margin-top:14px"></div>
+      </section>
+    </div>
+
+    <div class="footerNote">Safariで開いて「ホーム画面に追加」をするとアプリっぽく使えます。</div>
+  </div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "salary_meter_v5";
+  const CATEGORY_META = {
+    "食費": { icon:"🍚", color:"#fff4df" }, "日用品": { icon:"🧻", color:"#eef5ff" },
+    "交通": { icon:"🚃", color:"#eef8ff" }, "趣味": { icon:"🎮", color:"#f1ecff" },
+    "美容・服": { icon:"👕", color:"#fff0f6" }, "交際費": { icon:"🤝", color:"#fff6eb" },
+    "サブスク": { icon:"📺", color:"#eef3ff" }, "固定費": { icon:"🏠", color:"#fff7e8" },
+    "医療": { icon:"💊", color:"#eefcf5" }, "その他": { icon:"📝", color:"#f5f7fb" }
+  };
+  const DEFAULT_CATEGORIES = Object.keys(CATEGORY_META);
+  const DOW = ["日","月","火","水","木","金","土"];
+
+  const defaults = {
+    monthSalary: 172386, payday: 25, bankStartBalance: 0, savingGoal: 300000,
+    trackingStart: nowLocalInputValue(), workStart: "08:30", workEnd: "17:30",
+    breakStart: "12:00", breakEnd: "13:00", workDays: [1,2,3,4,5],
+    categories: [...DEFAULT_CATEGORIES], transactions: [], recurringExpenses: []
+  };
+
+  let state = loadState();
+  let summaryRange = "month";
+  let historyFilter = "all";
+  let calendarCursor = new Date();
+
+  const el = id => document.getElementById(id);
+
+  fillSelects();
+  hydrateInputs();
+  renderWeekdayChips();
+  renderCategoryOptions();
+  renderDow();
+  bindEvents();
+  render();
+  setInterval(render, 1000);
+
+  function bindEvents(){
+    el("saveSalarySettings").addEventListener("click", saveSettings);
+    el("seedDemo").addEventListener("click", seedDemo);
+    el("clearAll").addEventListener("click", clearAll);
+    el("addTx").addEventListener("click", addTransaction);
+    el("addFixed").addEventListener("click", addRecurringExpense);
+
+    document.querySelectorAll("#summaryRangeChips .chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        summaryRange = btn.dataset.range;
+        setActive(btn, "#summaryRangeChips .chip");
+        render();
+      });
+    });
+    document.querySelectorAll("#historyFilterChips .chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        historyFilter = btn.dataset.filter;
+        setActive(btn, "#historyFilterChips .chip");
+        render();
+      });
+    });
+    el("prevMonth").addEventListener("click", () => { calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth()-1, 1); render(); });
+    el("todayMonth").addEventListener("click", () => { calendarCursor = new Date(); render(); });
+    el("nextMonth").addEventListener("click", () => { calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth()+1, 1); render(); });
+  }
+
+  function setActive(active, selector){
+    document.querySelectorAll(selector).forEach(x => x.classList.remove("active"));
+    active.classList.add("active");
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return structuredClone(defaults);
+      const p = JSON.parse(raw);
+      return { ...structuredClone(defaults), ...p, categories: dedupe([...(p.categories||[]), ...DEFAULT_CATEGORIES]), workDays: (p.workDays||[1,2,3,4,5]).sort((a,b)=>a-b) };
+    }catch{ return structuredClone(defaults); }
+  }
+  function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function fillSelects(){
+    el("payday").innerHTML = Array.from({length:28}, (_,i) => `<option value="${i+1}">${i+1}日</option>`).join("");
+    el("fixedDay").innerHTML = Array.from({length:28}, (_,i) => `<option value="${i+1}">${i+1}日</option>`).join("");
+  }
+  function hydrateInputs(){
+    el("monthSalary").value = state.monthSalary;
+    el("payday").value = state.payday;
+    el("bankStartBalance").value = state.bankStartBalance;
+    el("savingGoal").value = state.savingGoal;
+    el("trackingStart").value = normalizeLocalDatetime(state.trackingStart);
+    el("workStart").value = state.workStart;
+    el("workEnd").value = state.workEnd;
+    el("breakStart").value = state.breakStart;
+    el("breakEnd").value = state.breakEnd;
+    el("txDate").value = nowLocalInputValue();
+  }
+  function renderWeekdayChips(){
+    const root = el("weekdayRow"); root.innerHTML = "";
+    DOW.forEach((label, day) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "dayChip" + (state.workDays.includes(day) ? " active" : "");
+      b.textContent = label;
+      b.addEventListener("click", () => {
+        if(state.workDays.includes(day)) state.workDays = state.workDays.filter(x => x !== day);
+        else state.workDays = [...state.workDays, day].sort((a,b)=>a-b);
+        if(!state.workDays.length) state.workDays = [1,2,3,4,5];
+        saveState(); renderWeekdayChips(); render();
+      });
+      root.appendChild(b);
+    });
+  }
+  function renderCategoryOptions(){
+    const options = state.categories.map(name => {
+      const m = categoryMeta(name);
+      return `<option value="${escapeHtml(name)}">${m.icon} ${escapeHtml(name)}</option>`;
+    }).join("");
+    el("txCategory").innerHTML = options;
+    el("fixedCategory").innerHTML = options;
+  }
+  function renderDow(){
+    el("calendarDow").innerHTML = DOW.map(d => `<div class="dow">${d}</div>`).join("");
+  }
+
+  function saveSettings(){
+    state.monthSalary = parseNumber(el("monthSalary").value, state.monthSalary);
+    state.payday = parseInt(el("payday").value, 10) || 25;
+    state.bankStartBalance = parseNumber(el("bankStartBalance").value, state.bankStartBalance);
+    state.savingGoal = parseNumber(el("savingGoal").value, state.savingGoal);
+    state.trackingStart = normalizeLocalDatetime(el("trackingStart").value || nowLocalInputValue());
+    state.workStart = el("workStart").value || "08:30";
+    state.workEnd = el("workEnd").value || "17:30";
+    state.breakStart = el("breakStart").value || "12:00";
+    state.breakEnd = el("breakEnd").value || "13:00";
+    saveState(); render();
+  }
+  function clearAll(){
+    if(!confirm("設定・履歴・固定費をすべて消しますか？")) return;
+    state = structuredClone(defaults); calendarCursor = new Date();
+    hydrateInputs(); renderWeekdayChips(); renderCategoryOptions(); saveState(); render();
+  }
+  function seedDemo(){
+    addCategoryIfNeeded("プレゼント");
+    const now = new Date();
+    state.transactions.unshift({id:uid(), type:"expense", category:"食費", name:"昼ごはん", amount:850, createdAt:new Date(now.getTime()-6*3600*1000).toISOString()});
+    state.transactions.unshift({id:uid(), type:"expense", category:"趣味", name:"ゲーム課金", amount:1500, createdAt:new Date(now.getTime()-30*3600*1000).toISOString()});
+    state.transactions.unshift({id:uid(), type:"income", category:"その他", name:"フリマ売上", amount:2500, createdAt:new Date(now.getTime()-54*3600*1000).toISOString()});
+    state.recurringExpenses.unshift({id:uid(), category:"固定費", name:"サブスク", amount:980, day:12});
+    state.recurringExpenses.unshift({id:uid(), category:"固定費", name:"通信費", amount:5000, day:25});
+    saveState(); renderCategoryOptions(); render();
+  }
+  function addCategoryIfNeeded(name){
+    const clean = String(name || "").trim();
+    if(clean) state.categories = dedupe([clean, ...state.categories]);
+  }
+  function addTransaction(){
+    const custom = String(el("customCategory").value || "").trim();
+    if(custom){
+      addCategoryIfNeeded(custom);
+      renderCategoryOptions();
+      el("txCategory").value = custom;
+      el("fixedCategory").value = custom;
+      el("customCategory").value = "";
+    }
+    const amount = parseNumber(el("txAmount").value, 0);
+    if(!(amount > 0)) return;
+    state.transactions.unshift({
+      id: uid(), type: el("txType").value, category: el("txCategory").value || "その他",
+      name: String(el("txName").value || "").trim() || (el("txType").value === "expense" ? "支出" : "臨時収入"),
+      amount, createdAt: new Date(el("txDate").value || nowLocalInputValue()).toISOString()
+    });
+    el("txAmount").value = ""; el("txName").value = ""; el("txDate").value = nowLocalInputValue();
+    saveState(); render();
+  }
+  function addRecurringExpense(){
+    const amount = parseNumber(el("fixedAmount").value, 0);
+    const name = String(el("fixedName").value || "").trim();
+    if(!(amount > 0) || !name) return;
+    state.recurringExpenses.unshift({
+      id: uid(), category: el("fixedCategory").value || "固定費", name, amount,
+      day: parseInt(el("fixedDay").value, 10) || 1
+    });
+    el("fixedName").value = ""; el("fixedAmount").value = "";
+    saveState(); render();
+  }
+
+  function render(){
+    const now = new Date();
+    const trackingStart = finiteDate(new Date(state.trackingStart), new Date());
+    const cycleStart = getCycleStart(now, state.payday);
+    const cycleEnd = getCycleEnd(cycleStart, state.payday);
+
+    const cycleTotalWorkSeconds = workingSecondsBetween(cycleStart, cycleEnd, state);
+    const cycleElapsedWorkSeconds = workingSecondsBetween(cycleStart, now, state);
+    const perSec = cycleTotalWorkSeconds > 0 ? state.monthSalary / cycleTotalWorkSeconds : 0;
+    const cycleAccrued = perSec * cycleElapsedWorkSeconds;
+
+    const totalEarned = accruedSalaryBetween(trackingStart, now, state);
+    const earnedToday = accruedSalaryBetween(dayStart(now), now, state);
+
+    const autoEntriesAll = buildRecurringEntries(state.recurringExpenses, trackingStart, now);
+    const manualEntries = [...state.transactions];
+    const allEntries = sortEntries([...manualEntries, ...autoEntriesAll]);
+
+    const manualExpenseTotal = sumAmount(manualEntries.filter(x => x.type === "expense"));
+    const autoExpenseTotal = sumAmount(autoEntriesAll);
+    const manualIncomeTotal = sumAmount(manualEntries.filter(x => x.type === "income"));
+    const bankBalance = state.bankStartBalance + totalEarned + manualIncomeTotal - manualExpenseTotal - autoExpenseTotal;
+
+    const monthEntriesManual = manualEntries.filter(x => isSameMonth(new Date(x.createdAt), now));
+    const monthEntriesAuto = autoEntriesAll.filter(x => isSameMonth(new Date(x.createdAt), now));
+    const spentThisMonth = sumAmount(monthEntriesManual.filter(x => x.type === "expense")) + sumAmount(monthEntriesAuto);
+
+    const active = isWithinWorkSegments(now, state);
+    el("statusPill").className = "statusPill" + (active ? "" : " idle");
+    el("statusText").textContent = active ? "稼働中" : "待機中";
+    el("cycleAccruedHero").textContent = yen(cycleAccrued);
+    el("perSecHero").textContent = yenRate(perSec);
+    el("balanceHero").textContent = yen(bankBalance);
+    el("paydayHero").textContent = String(state.payday);
+    el("bankStartHero").textContent = yen(state.bankStartBalance);
+
+    el("salaryBadgeMonth").textContent = yen(state.monthSalary);
+    el("previewWorkTime").textContent = `${state.workStart} - ${state.workEnd}`;
+    el("previewWorkDays").textContent = formatWorkDays(state.workDays);
+    el("previewBreak").textContent = `休憩: ${state.breakStart} - ${state.breakEnd}`;
+    el("previewPayday").textContent = `給料日: 毎月${state.payday}日`;
+    el("previewBankStart").textContent = `初期銀行残高: ${yen(state.bankStartBalance)}`;
+    el("previewPerSec").textContent = yenRate(perSec);
+
+    const progress = state.savingGoal > 0 ? clamp(bankBalance / state.savingGoal, 0, 1) : 0;
+    el("goalBar").style.width = `${(progress*100).toFixed(1)}%`;
+    el("goalText").textContent = `${yen(Math.max(0, bankBalance))} / ${yen(state.savingGoal)}`;
+    el("goalRemain").textContent = yen(Math.max(0, state.savingGoal - Math.max(0, bankBalance)));
+
+    el("balanceStat").textContent = yen(bankBalance);
+    el("balanceStat").className = "v small " + (bankBalance < 0 ? "red" : "");
+    el("totalEarnedStat").textContent = yen(totalEarned);
+    el("spentThisMonth").textContent = yen(spentThisMonth);
+    el("earnedToday").textContent = yen(earnedToday);
+
+    renderFixedList();
+    renderCategorySummary(allEntries, now);
+    renderCalendar(allEntries, calendarCursor);
+    renderHistory(allEntries);
+  }
+
+  function formatWorkDays(days){ return days.slice().sort((a,b)=>a-b).map(d => DOW[d]).join("・"); }
+  function getCycleStart(date, payday){
+    const y = date.getFullYear(), m = date.getMonth();
+    const thisPayday = new Date(y, m, Math.min(payday, lastDayOfMonth(y,m)), 0, 0, 0, 0);
+    if(date >= thisPayday) return thisPayday;
+    const py = m === 0 ? y - 1 : y, pm = m === 0 ? 11 : m - 1;
+    return new Date(py, pm, Math.min(payday, lastDayOfMonth(py,pm)), 0, 0, 0, 0);
+  }
+  function getCycleEnd(cycleStart, payday){
+    const y = cycleStart.getFullYear(), m = cycleStart.getMonth();
+    const ny = m === 11 ? y + 1 : y, nm = (m + 1) % 12;
+    return new Date(ny, nm, Math.min(payday, lastDayOfMonth(ny,nm)), 0, 0, 0, 0);
+  }
+  function timeToMinutes(v){
+    const [h,m] = String(v || "0:0").split(":").map(Number);
+    return (h || 0) * 60 + (m || 0);
+  }
+  function getDailySegments(date, cfg){
+    if(!cfg.workDays.includes(date.getDay())) return [];
+    const ws = timeToMinutes(cfg.workStart), we = timeToMinutes(cfg.workEnd);
+    const bs = timeToMinutes(cfg.breakStart), be = timeToMinutes(cfg.breakEnd);
+    if(we <= ws) return [];
+    const segs = [];
+    const s1s = ws, s1e = Math.min(we, Math.max(ws, bs));
+    const s2s = Math.max(ws, Math.min(we, be)), s2e = we;
+    if(s1e > s1s) segs.push([mkDate(date,s1s), mkDate(date,s1e)]);
+    if(s2e > s2s) segs.push([mkDate(date,s2s), mkDate(date,s2e)]);
+    return segs;
+  }
+  function mkDate(base, minutes){ return new Date(base.getFullYear(), base.getMonth(), base.getDate(), Math.floor(minutes/60), minutes%60, 0, 0); }
+  function isWithinWorkSegments(date, cfg){ return getDailySegments(date, cfg).some(([s,e]) => date >= s && date < e); }
+  function workingSecondsBetween(start, end, cfg){
+    if(!(end > start)) return 0;
+    let total = 0, d = dayStart(start), last = dayStart(end);
+    while(d <= last){
+      getDailySegments(d, cfg).forEach(([s,e]) => {
+        const from = new Date(Math.max(s.getTime(), start.getTime()));
+        const to = new Date(Math.min(e.getTime(), end.getTime()));
+        if(to > from) total += (to - from) / 1000;
+      });
+      d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0, 0);
+    }
+    return total;
+  }
+  function accruedSalaryBetween(start, end, cfg){
+    if(!(end > start)) return 0;
+    let total = 0, cursor = new Date(start);
+    while(cursor < end){
+      const cStart = getCycleStart(cursor, cfg.payday);
+      const cEnd = getCycleEnd(cStart, cfg.payday);
+      const segEnd = new Date(Math.min(cEnd.getTime(), end.getTime()));
+      const totalWork = workingSecondsBetween(cStart, cEnd, cfg);
+      const worked = workingSecondsBetween(cursor, segEnd, cfg);
+      if(totalWork > 0) total += cfg.monthSalary * (worked / totalWork);
+      cursor = segEnd.getTime() === cEnd.getTime() ? new Date(cEnd.getTime() + 1) : segEnd;
+    }
+    return total;
+  }
+
+  function renderFixedList(){
+    if(!state.recurringExpenses.length){ el("fixedList").innerHTML = `<div class="empty">固定費はまだありません</div>`; return; }
+    el("fixedList").innerHTML = "";
+    state.recurringExpenses.forEach(item => {
+      const m = categoryMeta(item.category);
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `
+        <div class="iconLine">
+          <span class="iconBubble" style="background:${m.color}">${m.icon}</span>
+          <div class="meta">
+            <div class="name">${escapeHtml(item.name)}</div>
+            <div class="pill">${escapeHtml(item.category)} / 毎月${item.day}日</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="amount red">-${yen(item.amount)}</div>
+          <button class="ghost">削除</button>
+        </div>`;
+      div.querySelector("button").addEventListener("click", () => {
+        state.recurringExpenses = state.recurringExpenses.filter(x => x.id !== item.id);
+        saveState(); render();
+      });
+      el("fixedList").appendChild(div);
+    });
+  }
+  function renderCategorySummary(allEntries, now){
+    let entries = allEntries.filter(e => e.kind !== "income");
+    if(summaryRange === "month") entries = entries.filter(e => isSameMonth(new Date(e.createdAt), now));
+    const map = new Map();
+    entries.forEach(e => map.set(e.category || "その他", (map.get(e.category || "その他") || 0) + e.amount));
+    const rows = [...map.entries()].sort((a,b)=>b[1]-a[1]);
+    if(!rows.length){ el("categorySummary").innerHTML = `<div class="empty">まだカテゴリ別データがありません</div>`; return; }
+    const max = rows[0][1] || 1;
+    el("categorySummary").innerHTML = rows.map(([name, amount]) => {
+      const m = categoryMeta(name);
+      return `<div class="summaryItem">
+        <div class="row">
+          <div class="iconLine"><span class="iconBubble" style="background:${m.color}">${m.icon}</span><div class="name">${escapeHtml(name)}</div></div>
+          <div class="amount red">-${yen(amount)}</div>
+        </div>
+        <div class="barLine"><div class="barFill" style="width:${(amount/max*100).toFixed(1)}%"></div></div>
+      </div>`;
+    }).join("");
+  }
+  function renderCalendar(allEntries, cursor){
+    const y = cursor.getFullYear(), m = cursor.getMonth();
+    el("calendarTitle").textContent = `${y}年${m+1}月`;
+    const first = new Date(y,m,1), last = new Date(y,m+1,0), startOffset = first.getDay(), totalDays = last.getDate(), prevLast = new Date(y,m,0).getDate();
+    const dayMap = new Map();
+    allEntries.forEach(item => {
+      const d = new Date(item.createdAt);
+      if(d.getFullYear() === y && d.getMonth() === m){
+        const day = d.getDate();
+        if(!dayMap.has(day)) dayMap.set(day, []);
+        dayMap.get(day).push(item);
+      }
+    });
+    const cells = [];
+    for(let i=0;i<42;i++){
+      const dateNum = i - startOffset + 1;
+      let cellDate, muted = false;
+      if(dateNum < 1){ cellDate = new Date(y,m-1,prevLast + dateNum); muted = true; }
+      else if(dateNum > totalDays){ cellDate = new Date(y,m+1,dateNum-totalDays); muted = true; }
+      else cellDate = new Date(y,m,dateNum);
+      const isCurrent = !muted;
+      const entries = isCurrent ? (dayMap.get(dateNum) || []).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)) : [];
+      const expense = sumAmount(entries.filter(e => e.kind !== "income"));
+      const income = sumAmount(entries.filter(e => e.kind === "income"));
+      const today = isSameDay(cellDate, new Date());
+      const preview = entries.slice(0,2).map(e => {
+        const m = categoryMeta(e.category), kind = e.kind === "income" ? "income" : e.kind === "auto" ? "auto" : "expense", sign = e.kind === "income" ? "+" : "-";
+        return `<div class="dayEntry ${kind}">${m.icon} ${escapeHtml(e.name)} ${sign}${yen(e.amount)}</div>`;
+      }).join("");
+      cells.push(`<div class="day ${muted ? "mutedCell" : ""} ${today ? "today" : ""}">
+        <div class="dayNum">${cellDate.getDate()}</div>
+        ${isCurrent && income ? `<div class="daySummary inc">+${yen(income)}</div>` : ""}
+        ${isCurrent && expense ? `<div class="daySummary exp">-${yen(expense)}</div>` : ""}
+        <div class="dayEntries">${preview}</div>
+      </div>`);
+    }
+    el("calendarGrid").innerHTML = cells.join("");
+  }
+  function renderHistory(allEntries){
+    let entries = allEntries;
+    if(historyFilter !== "all") entries = entries.filter(e => e.kind === historyFilter);
+    entries = entries.slice(0, 60);
+    if(!entries.length){ el("historyList").innerHTML = `<div class="empty">履歴はまだありません</div>`; return; }
+    el("historyList").innerHTML = "";
+    entries.forEach(item => {
+      const m = categoryMeta(item.category);
+      const div = document.createElement("div");
+      div.className = "item";
+      const tagClass = item.kind === "income" ? "tagIncome" : item.kind === "auto" ? "tagAuto" : "tagExpense";
+      const sign = item.kind === "income" ? "+" : "-";
+      const amountClass = item.kind === "income" ? "green" : "red";
+      div.innerHTML = `
+        <div class="iconLine">
+          <span class="iconBubble" style="background:${m.color}">${m.icon}</span>
+          <div class="meta">
+            <div class="name">${escapeHtml(item.name)}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="pill ${tagClass}">${item.kind === "income" ? "収入" : item.kind === "auto" ? "固定費" : "支出"}</span>
+              <span class="pill">${escapeHtml(item.category || "その他")}</span>
+              <span class="pill">${formatDateTimeShort(new Date(item.createdAt))}</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="amount ${amountClass}">${sign}${yen(item.amount)}</div>
+          ${item.kind === "auto" ? "" : '<button class="ghost">削除</button>'}
+        </div>`;
+      const btn = div.querySelector("button");
+      if(btn){
+        btn.addEventListener("click", () => {
+          state.transactions = state.transactions.filter(x => x.id !== item.id);
+          saveState(); render();
+        });
+      }
+      el("historyList").appendChild(div);
+    });
+  }
+
+  function buildRecurringEntries(recurring, start, now){
+    const out = [];
+    recurring.forEach(item => {
+      iterateMonthPoints(start, now, (y,m) => {
+        const day = Math.min(item.day, lastDayOfMonth(y,m));
+        const date = new Date(y,m,day,0,0,0,0);
+        if(date >= start && date <= now){
+          out.push({ id:`${item.id}_${y}_${m}_${day}`, kind:"auto", type:"expense", category:item.category, name:item.name, amount:item.amount, createdAt:date.toISOString() });
+        }
+      });
+    });
+    return out;
+  }
+  function iterateMonthPoints(start, end, cb){
+    let y = start.getFullYear(), m = start.getMonth();
+    const ey = end.getFullYear(), em = end.getMonth();
+    while(y < ey || (y === ey && m <= em)){ cb(y,m); m++; if(m > 11){ m = 0; y++; } }
+  }
+
+  function categoryMeta(name){ return CATEGORY_META[name] || { icon:"📝", color:"#f5f7fb" }; }
+  function sumAmount(arr){ return arr.reduce((s,x)=>s + (Number(x.amount) || 0), 0); }
+  function sortEntries(arr){ return arr.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)); }
+  function dedupe(arr){ return [...new Set(arr.filter(Boolean).map(x=>String(x).trim()).filter(Boolean))]; }
+  function clamp(v,min,max){ return Math.min(max, Math.max(min, v)); }
+  function dayStart(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0); }
+  function lastDayOfMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+  function isSameMonth(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth(); }
+  function isSameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+  function finiteDate(d, fallback){ return d instanceof Date && !Number.isNaN(d.getTime()) ? d : fallback; }
+  function parseNumber(value, fallback=0){ const n = Number(String(value ?? "").replace(/[^\d.-]/g, "")); return Number.isFinite(n) ? n : fallback; }
+  function normalizeLocalDatetime(value){ const d = finiteDate(new Date(value), new Date()); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+  function nowLocalInputValue(){ return normalizeLocalDatetime(new Date()); }
+  function pad(n){ return String(n).padStart(2,"0"); }
+  function uid(){ return crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()); }
+  function yen(value){ return new Intl.NumberFormat("ja-JP",{style:"currency",currency:"JPY",maximumFractionDigits:0}).format(Math.round(value || 0)); }
+  function yenRate(value){ return `¥${Number(value || 0).toFixed(4)}`; }
+  function formatDateTimeShort(d){ return new Intl.DateTimeFormat("ja-JP",{year:"2-digit",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}).format(d); }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, ch => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[ch])); }
+})();
+</script>
+</body>
+</html>
