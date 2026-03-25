@@ -327,6 +327,57 @@
       </section>
 
       <section class="card">
+        <h2>ボーナス・臨時収入</h2>
+        <div class="inputs three">
+          <div class="field">
+            <label for="bonusAmount">金額（円）</label>
+            <input id="bonusAmount" inputmode="numeric" placeholder="例: 50000">
+          </div>
+          <div class="field">
+            <label for="bonusName">内容</label>
+            <input id="bonusName" placeholder="例: 夏ボーナス / 冬ボーナス / 臨時収入">
+          </div>
+          <div class="field">
+            <label for="bonusDate">日時</label>
+            <input id="bonusDate" type="datetime-local">
+          </div>
+        </div>
+        <div class="actions" style="margin-top:14px">
+          <button class="greenBtn" id="addBonus">追加する</button>
+        </div>
+        <div class="note">ここから追加した金額は「ボーナス」カテゴリの収入として記録されます。</div>
+      </section>
+
+      <section class="card">
+        <div class="calendarHeader">
+          <div class="calendarTitle" id="annualTitle">年間サマリー 2026年</div>
+          <div class="actions">
+            <button class="ghost" id="prevYear">前年</button>
+            <button class="ghost" id="thisYear">今年</button>
+            <button class="ghost" id="nextYear">翌年</button>
+          </div>
+        </div>
+        <div class="stats four">
+          <div class="stat">
+            <div class="k">年間給与積み上げ</div>
+            <div id="annualSalary" class="v small green">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">ボーナス・臨時収入</div>
+            <div id="annualBonus" class="v small green">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">年間支出</div>
+            <div id="annualExpense" class="v small red">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">年間収支</div>
+            <div id="annualNet" class="v small">¥0</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
         <h2>毎月の固定費</h2>
         <div class="inputs three">
           <div class="field">
@@ -418,6 +469,7 @@
   let summaryRange = "month";
   let historyFilter = "all";
   let calendarCursor = new Date();
+  let annualCursorYear = new Date().getFullYear();
 
   const el = id => document.getElementById(id);
 
@@ -435,7 +487,11 @@
     el("seedDemo").addEventListener("click", seedDemo);
     el("clearAll").addEventListener("click", clearAll);
     el("addTx").addEventListener("click", addTransaction);
+    el("addBonus").addEventListener("click", addBonusIncome);
     el("addFixed").addEventListener("click", addRecurringExpense);
+    el("prevYear").addEventListener("click", () => { annualCursorYear -= 1; render(); });
+    el("thisYear").addEventListener("click", () => { annualCursorYear = new Date().getFullYear(); render(); });
+    el("nextYear").addEventListener("click", () => { annualCursorYear += 1; render(); });
 
     document.querySelectorAll("#summaryRangeChips .chip").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -486,6 +542,8 @@
     el("breakStart").value = state.breakStart ?? "";
     el("breakEnd").value = state.breakEnd ?? "";
     el("txDate").value = nowLocalInputValue();
+    const bonusDateEl = el("bonusDate");
+    if (bonusDateEl) bonusDateEl.value = nowLocalInputValue();
   }
   function renderWeekdayChips(){
     const root = el("weekdayRow"); root.innerHTML = "";
@@ -564,6 +622,24 @@
     el("txAmount").value = ""; el("txName").value = ""; el("txDate").value = nowLocalInputValue();
     saveState(); render();
   }
+  function addBonusIncome(){
+    const amount = parseNumber(el("bonusAmount").value, 0);
+    if(!(amount > 0)) return;
+    state.transactions.unshift({
+      id: uid(),
+      type: "income",
+      category: "ボーナス",
+      name: String(el("bonusName").value || "").trim() || "ボーナス",
+      amount,
+      createdAt: new Date(el("bonusDate").value || nowLocalInputValue()).toISOString()
+    });
+    el("bonusAmount").value = "";
+    el("bonusName").value = "";
+    el("bonusDate").value = nowLocalInputValue();
+    saveState();
+    render();
+  }
+
   function addRecurringExpense(){
     const amount = parseNumber(el("fixedAmount").value, 0);
     const name = String(el("fixedName").value || "").trim();
@@ -609,6 +685,17 @@
     const monthEntriesAuto = autoEntriesAll.filter(x => isSameMonth(new Date(x.createdAt), now));
     const spentThisMonth = sumAmount(monthEntriesManual.filter(x => x.type === "expense")) + sumAmount(monthEntriesAuto);
 
+    const yearStart = new Date(annualCursorYear, 0, 1, 0, 0, 0, 0);
+    const yearEnd = new Date(annualCursorYear + 1, 0, 1, 0, 0, 0, 0);
+    const annualSalaryStart = trackingStart ? new Date(Math.max(trackingStart.getTime(), yearStart.getTime())) : null;
+    const annualSalaryEnd = new Date(Math.min(now.getTime(), yearEnd.getTime()));
+    const annualSalary = trackingStart && annualSalaryEnd > annualSalaryStart ? accruedSalaryBetween(annualSalaryStart, annualSalaryEnd, state) : 0;
+    const annualManual = manualEntries.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
+    const annualAuto = autoEntriesAll.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
+    const annualExtraIncome = sumAmount(annualManual.filter(x => x.type === "income"));
+    const annualExpense = sumAmount(annualManual.filter(x => x.type === "expense")) + sumAmount(annualAuto);
+    const annualNet = annualSalary + annualExtraIncome - annualExpense;
+
     const configured = monthSalary > 0 && state.payday !== "" && state.workStart && state.workEnd && Array.isArray(state.workDays) && state.workDays.length > 0;
     const active = configured && isWithinWorkSegments(now, state);
     el("statusPill").className = "statusPill" + (active ? "" : " idle");
@@ -637,6 +724,13 @@
     el("totalEarnedStat").textContent = yen(totalEarned);
     el("spentThisMonth").textContent = yen(spentThisMonth);
     el("earnedToday").textContent = yen(earnedToday);
+
+    el("annualTitle").textContent = `年間サマリー ${annualCursorYear}年`;
+    el("annualSalary").textContent = yen(annualSalary);
+    el("annualBonus").textContent = yen(annualExtraIncome);
+    el("annualExpense").textContent = yen(annualExpense);
+    el("annualNet").textContent = yen(annualNet);
+    el("annualNet").className = "v small " + (annualNet < 0 ? "red" : "green");
 
     renderFixedList();
     renderCategorySummary(allEntries, now);
