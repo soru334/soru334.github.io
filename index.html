@@ -376,15 +376,8 @@ details.foldCard[open] > summary{margin-bottom:12px}
       </section>
 
       <section class="card">
-        <h2>支出・収入を追加</h2>
+        <h2>支出を追加</h2>
         <div class="inputs three">
-          <div class="field">
-            <label for="txType">種類</label>
-            <select id="txType">
-              <option value="expense">支出</option>
-              <option value="income">臨時収入</option>
-            </select>
-          </div>
           <div class="field">
             <label for="txCategory">カテゴリ</label>
             <select id="txCategory"></select>
@@ -395,7 +388,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
           </div>
           <div class="field">
             <label for="txName">内容</label>
-            <input id="txName" placeholder="例: コンビニ / ゲーム / フリマ売上">
+            <input id="txName" placeholder="例: コンビニ / ゲーム / 服">
           </div>
           <div class="field">
             <label for="txDate">日時</label>
@@ -407,12 +400,12 @@ details.foldCard[open] > summary{margin-bottom:12px}
           </div>
         </div>
         <div class="actions" style="margin-top:14px">
-          <button class="greenBtn" id="addTx">追加する</button>
+          <button class="greenBtn" id="addTx">支出を追加</button>
         </div>
       </section>
 
       <section class="card">
-        <h2>ボーナス・臨時収入</h2>
+        <h2>臨時収入を追加</h2>
         <div class="inputs three">
           <div class="field">
             <label for="bonusAmount">金額（円）</label>
@@ -420,7 +413,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
           </div>
           <div class="field">
             <label for="bonusName">内容</label>
-            <input id="bonusName" placeholder="例: 夏ボーナス / 冬ボーナス / 臨時収入">
+            <input id="bonusName" placeholder="例: 臨時収入 / 手当 / 振込">
           </div>
           <div class="field">
             <label for="bonusDate">日時</label>
@@ -430,7 +423,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
         <div class="actions" style="margin-top:14px">
           <button class="greenBtn" id="addBonus">追加する</button>
         </div>
-        <div class="note">ここから追加した金額は「ボーナス」カテゴリの収入として記録されます。</div>
+        <div class="note">ここから追加した金額は臨時収入として記録されます。</div>
       </section>
 
       <section class="card">
@@ -784,8 +777,8 @@ details.foldCard[open] > summary{margin-bottom:12px}
     const amount = parseNumber(el("txAmount").value, 0);
     if(!(amount > 0)) return;
     state.transactions.unshift({
-      id: uid(), type: el("txType").value, category: el("txCategory").value || "その他",
-      name: String(el("txName").value || "").trim() || (el("txType").value === "expense" ? "支出" : "臨時収入"),
+      id: uid(), type: "expense", category: el("txCategory").value || "その他",
+      name: String(el("txName").value || "").trim() || "支出",
       amount, createdAt: new Date(el("txDate").value || nowLocalInputValue()).toISOString()
     });
     el("txAmount").value = ""; el("txName").value = ""; el("txDate").value = nowLocalInputValue();
@@ -797,8 +790,8 @@ details.foldCard[open] > summary{margin-bottom:12px}
     state.transactions.unshift({
       id: uid(),
       type: "income",
-      category: "ボーナス",
-      name: String(el("bonusName").value || "").trim() || "ボーナス",
+      category: "臨時収入",
+      name: String(el("bonusName").value || "").trim() || "臨時収入",
       amount,
       createdAt: new Date(el("bonusDate").value || nowLocalInputValue()).toISOString()
     });
@@ -1202,14 +1195,15 @@ function getDayOverride(date, cfg){
       const expense = sumAmount(entries.filter(e => e.kind !== "income"));
       const income = sumAmount(entries.filter(e => e.kind === "income"));
       const today = isSameDay(cellDate, new Date());
+      const holiday = isCurrent && isJapanHoliday(cellDate);
       const dateKey = `${cellDate.getFullYear()}-${pad(cellDate.getMonth()+1)}-${pad(cellDate.getDate())}`;
       if(isCurrent) calendarDetailMap.set(dateKey, entries);
       const preview = entries.slice(0,2).map(e => {
         const m = categoryMeta(e.category), kind = e.kind === "income" ? "income" : e.kind === "auto" ? "auto" : "expense", sign = e.kind === "income" ? "+" : "-";
         return `<div class="dayEntry ${kind}">${m.icon} ${escapeHtml(e.name)} ${sign}${yen(e.amount)}</div>`;
       }).join("");
-      cells.push(`<div class="day ${muted ? "mutedCell" : ""} ${today ? "today" : ""}" ${isCurrent ? `data-date="${dateKey}"` : ""}>
-        <div class="dayNum">${cellDate.getDate()}</div>
+      cells.push(`<div class="day ${muted ? "mutedCell" : ""} ${today ? "today" : ""} ${holiday ? "holiday" : ""}" ${isCurrent ? `data-date="${dateKey}"` : ""}>
+        <div class="dayNum ${holiday ? "holiday" : ""}">${cellDate.getDate()} ${holiday ? '<span class="holidayBadge">祝</span>' : ''}</div>
         ${isCurrent && income ? `<div class="daySummary inc">+${yen(income)}</div>` : ""}
         ${isCurrent && expense ? `<div class="daySummary exp">-${yen(expense)}</div>` : ""}
         <div class="dayEntries">${preview}</div>
