@@ -1317,7 +1317,15 @@ function getDayOverride(date, cfg){
 
 
 
-function applyDayOverrideFromModal(mode){
+function openSummaryModal(){
+    el("summaryModalBackdrop").classList.add("open");
+  }
+
+  function closeSummaryModal(){
+    el("summaryModalBackdrop").classList.remove("open");
+  }
+
+  function applyDayOverrideFromModal(mode){
   if(!currentModalDateKey) return;
   if(mode === "clear"){
     state.dayOverrides = (state.dayOverrides || []).filter(x => x.date !== currentModalDateKey);
