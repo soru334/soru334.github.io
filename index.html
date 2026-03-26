@@ -191,7 +191,17 @@ details.foldCard[open] > summary{margin-bottom:12px}
   border-radius:16px;background:#fff
 }
 .checkboxRow input{width:auto;transform:scale(1.15)}
-    .footerNote{font-size:12px;color:var(--muted);line-height:1.7;padding:6px 2px 0}
+    
+    .summaryModalBackdrop{
+      position:fixed;inset:0;background:rgba(20,28,48,.34);display:none;z-index:30
+    }
+    .summaryModalBackdrop.open{display:block}
+    .summaryModal{
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      width:min(92vw,720px);max-height:84vh;overflow:auto;background:#fff;border-radius:24px;
+      box-shadow:0 18px 40px rgba(34,50,96,.20);padding:18px
+    }
+.footerNote{font-size:12px;color:var(--muted);line-height:1.7;padding:6px 2px 0}
   </style>
 </head>
 <body>
@@ -208,10 +218,10 @@ details.foldCard[open] > summary{margin-bottom:12px}
       <div class="heroHeader">
         <div class="heroTitlePill">🌊 いまの増加ペース</div>
       </div>
-      <div class="heroCenter">
+      <div id="summaryOpenArea" class="heroCenter" style="cursor:pointer">
         <div id="statusPill" class="statusPill idle"><span class="statusDot"></span><span id="statusText">未設定</span></div>
         <div class="mini" style="margin-top:14px;color:#6f7da8;font-weight:700">給料日から次の給料日までの進み具合</div>
-        <div id="cycleAccruedHero" class="heroMoney">¥0</div>
+        <div id="cycleAccruedHero" class="heroMoney">¥0</div><div class="mini" style="margin-top:10px;color:#6f7da8;font-weight:700">タップでサマリー</div>
       </div>
       <div class="heroBottom">⏱️ 秒給 <span id="perSecHero">¥0.0000</span></div>
       <div class="heroMeta">
@@ -352,30 +362,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
           <div id="goalRemain" class="mini">¥0</div>
         </div>
       </section>
-
-      <section class="card">
-        <h2>サマリー</h2>
-        <div class="stats four">
-          <div class="stat">
-            <div class="k">現在の残高</div>
-            <div id="balanceStat" class="v small">¥0</div>
-          </div>
-          <div class="stat">
-            <div class="k">今年の給与累計</div>
-            <div id="totalEarnedStat" class="v small green">¥0</div>
-          </div>
-          <div class="stat">
-            <div class="k">今月の支出</div>
-            <div id="spentThisMonth" class="v small red">¥0</div>
-          </div>
-          <div class="stat">
-            <div class="k">今日増えた分</div>
-            <div id="earnedToday" class="v small green">¥0</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="card">
+<section class="card">
         <h2>支出を追加</h2>
         <div class="inputs three">
           <div class="field">
@@ -426,34 +413,6 @@ details.foldCard[open] > summary{margin-bottom:12px}
         <div class="note">ここから追加した金額は臨時収入として記録されます。</div>
       </section>
 
-      <section class="card">
-        <div class="calendarHeader">
-          <div class="calendarTitle" id="annualTitle">年間サマリー 2026年</div>
-          <div class="actions">
-            <button class="ghost" id="prevYear">前年</button>
-            <button class="ghost" id="thisYear">今年</button>
-            <button class="ghost" id="nextYear">翌年</button>
-          </div>
-        </div>
-        <div class="stats four">
-          <div class="stat">
-            <div class="k">年間給与積み上げ</div>
-            <div id="annualSalary" class="v small green">¥0</div>
-          </div>
-          <div class="stat">
-            <div class="k">ボーナス・臨時収入</div>
-            <div id="annualBonus" class="v small green">¥0</div>
-          </div>
-          <div class="stat">
-            <div class="k">年間支出</div>
-            <div id="annualExpense" class="v small red">¥0</div>
-          </div>
-          <div class="stat">
-            <div class="k">年間収支</div>
-            <div id="annualNet" class="v small">¥0</div>
-          </div>
-        </div>
-      </section>
 
       <section class="card">
         <h2>毎月の固定費</h2>
@@ -519,6 +478,62 @@ details.foldCard[open] > summary{margin-bottom:12px}
         <div id="historyList" class="list" style="margin-top:14px"></div>
       </section>
     </div>
+
+
+  
+  <div id="summaryModalBackdrop" class="summaryModalBackdrop">
+    <div class="summaryModal">
+      <div class="modalHeader">
+        <div class="modalTitle">サマリー</div>
+        <button id="summaryModalClose" class="modalClose">×</button>
+      </div>
+      <div class="stats four" style="margin-top:6px">
+        <div class="stat">
+          <div class="k">現在の残高</div>
+          <div id="balanceStat" class="v small">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">今年の給与累計</div>
+          <div id="totalEarnedStat" class="v small green">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">今月の支出</div>
+          <div id="spentThisMonth" class="v small red">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">今日増えた分</div>
+          <div id="earnedToday" class="v small green">¥0</div>
+        </div>
+      </div>
+
+      <div class="calendarHeader" style="margin-top:18px">
+        <div class="calendarTitle" id="annualTitle">年間サマリー 2026年</div>
+        <div class="actions">
+          <button class="ghost" id="prevYear">前年</button>
+          <button class="ghost" id="thisYear">今年</button>
+          <button class="ghost" id="nextYear">翌年</button>
+        </div>
+      </div>
+      <div class="stats four">
+        <div class="stat">
+          <div class="k">年間給与累計</div>
+          <div id="annualSalary" class="v small green">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">年間臨時収入</div>
+          <div id="annualBonus" class="v small green">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">年間支出</div>
+          <div id="annualExpense" class="v small red">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">年間収支</div>
+          <div id="annualNet" class="v small">¥0</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 
   <div id="dayModalBackdrop" class="modalBackdrop">
@@ -617,7 +632,10 @@ details.foldCard[open] > summary{margin-bottom:12px}
     el("salaryInputMode").addEventListener("change", () => { updateSalaryModeUI(); render(); });
     el("hourlyCalcMode").addEventListener("change", () => { updateSalaryModeUI(); render(); });
     el("dayModalClose").addEventListener("click", closeDayModal);
+    el("summaryOpenArea").addEventListener("click", openSummaryModal);
+    el("summaryModalClose").addEventListener("click", closeSummaryModal);
     el("dayModalBackdrop").addEventListener("click", (e) => { if(e.target === el("dayModalBackdrop")) closeDayModal(); });
+    el("summaryModalBackdrop").addEventListener("click", (e) => { if(e.target === el("summaryModalBackdrop")) closeSummaryModal(); });
     el("modalSetOff").addEventListener("click", () => applyDayOverrideFromModal("off"));
     el("modalSetWork").addEventListener("click", () => applyDayOverrideFromModal("work"));
     el("modalClearOverride").addEventListener("click", () => applyDayOverrideFromModal("clear"));
@@ -910,13 +928,15 @@ details.foldCard[open] > summary{margin-bottom:12px}
     const monthEntriesAuto = autoEntriesAll.filter(x => isSameMonth(new Date(x.createdAt), now));
     const spentThisMonth = sumAmount(monthEntriesManual.filter(x => x.type === "expense")) + sumAmount(monthEntriesAuto);
 
-    const currentYearStart = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
-    const currentYearSalary = accruedSalaryBetween(currentYearStart, now, state);
+    const currentYearSalary = resolveCurrentYearSalaryForSummary(now, state);
 
     const yearStart = new Date(annualCursorYear, 0, 1, 0, 0, 0, 0);
     const yearEnd = new Date(annualCursorYear + 1, 0, 1, 0, 0, 0, 0);
     const annualSalaryEnd = new Date(Math.min(now.getTime(), yearEnd.getTime()));
-    const annualSalary = annualSalaryEnd > yearStart ? accruedSalaryBetween(yearStart, annualSalaryEnd, state) : 0;
+    let annualSalary = annualSalaryEnd > yearStart ? accruedSalaryBetween(yearStart, annualSalaryEnd, state) : 0;
+    if(annualCursorYear === now.getFullYear()){
+      annualSalary = currentYearSalary;
+    }
     const annualManual = manualEntries.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
     const annualAuto = autoEntriesAll.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
     const annualExtraIncome = sumAmount(annualManual.filter(x => x.type === "income"));
@@ -1099,6 +1119,47 @@ function getDayOverride(date, cfg){
     }
     return total;
   }
+
+  function paydayDate(year, monthIndex, payday){
+    return new Date(year, monthIndex, Math.min(payday || 25, lastDayOfMonth(year, monthIndex)), 0, 0, 0, 0);
+  }
+
+  function resolveCurrentYearSalaryForSummary(now, cfg){
+    if((cfg.salaryInputMode || "monthly") !== "monthly"){
+      const currentYearStart = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+      return accruedSalaryBetween(currentYearStart, now, cfg);
+    }
+
+    const monthSalary = Number(cfg.monthSalary || 0);
+    if(!(monthSalary > 0)) return 0;
+
+    const year = now.getFullYear();
+    const payday = cfg.payday || 25;
+    let completedMonths = 0;
+    let lastBoundary = new Date(year, 0, 1, 0, 0, 0, 0);
+    let nextBoundary = paydayDate(year, 0, payday);
+
+    for(let m=0; m<12; m++){
+      const pd = paydayDate(year, m, payday);
+      if(pd <= now){
+        completedMonths += 1;
+        lastBoundary = pd;
+      } else {
+        nextBoundary = pd;
+        break;
+      }
+      if(m === 11){
+        nextBoundary = paydayDate(year + 1, 0, payday);
+      }
+    }
+
+    const cycleSeconds = Math.max(1, (nextBoundary - lastBoundary) / 1000);
+    const elapsedSeconds = Math.max(0, (now - lastBoundary) / 1000);
+    const fraction = Math.min(1, elapsedSeconds / cycleSeconds);
+
+    return completedMonths * monthSalary + monthSalary * fraction;
+  }
+
   function resolveCycleSalary(cStart, cEnd, cfg){
     if((cfg.salaryInputMode || "monthly") === "hourly"){
       if((cfg.hourlyCalcMode || "weekdays") === "monthlyDays"){
