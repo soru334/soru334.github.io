@@ -186,16 +186,17 @@
 
     <section class="card hero">
       <div class="heroHeader">
-        <div class="heroTitlePill">🌊 いまの増加ペース</div>
+        <div class="heroTitlePill">🌊 給与の積み上がり</div>
       </div>
       <div class="heroCenter">
         <div id="statusPill" class="statusPill idle"><span class="statusDot"></span><span id="statusText">未設定</span></div>
-        <div class="mini" style="margin-top:14px;color:#6f7da8;font-weight:700">給料日から次の給料日までの進み具合</div>
+        <div class="mini" style="margin-top:14px;color:#6f7da8;font-weight:700">給料日から次の給料日までで積み上がった給与</div>
         <div id="cycleAccruedHero" class="heroMoney">¥0</div>
       </div>
       <div class="heroBottom">⏱️ 秒給 <span id="perSecHero">¥0.0000</span></div>
       <div class="heroMeta">
         <div class="heroBadge">現在の残高: <span id="balanceHero">¥0</span></div>
+        <div class="heroBadge">残高 = 初期残高 + 給与 + 臨時収入 - 支出 - 固定費</div>
         <div class="heroBadge">給料日: 毎月 <span id="paydayHero">-</span> 日</div>
         <div class="heroBadge">初期残高: <span id="bankStartHero">¥0</span></div>
       </div>
@@ -291,7 +292,7 @@
           </div>
         </div>
 
-        <div class="note">銀行残高は「初期銀行残高 + 給与の積み上げ + 臨時収入 - 支出 - 固定費」で計算します。</div>
+        <div class="note">上の大きい金額は「今の給料日区間で積み上がった給与」です。サマリーの「今年の給与累計」は今年1月1日からの給与合計です。残高は別計算で、「初期銀行残高 + 給与の積み上げ + 臨時収入 - 支出 - 固定費」です。</div>
       </section>
 
       <section class="card">
@@ -305,7 +306,7 @@
             <input id="savingGoal" inputmode="numeric" placeholder="例: 500000">
           </div>
           <div class="field">
-            <label for="trackingStart">累計計算の基準日時</label>
+            <label for="trackingStart">残高計算の開始日時</label>
             <input id="trackingStart" type="datetime-local">
           </div>
         </div>
@@ -328,7 +329,7 @@
             <div id="balanceStat" class="v small">¥0</div>
           </div>
           <div class="stat">
-            <div class="k">累計給与獲得額</div>
+            <div class="k">今年の給与累計</div>
             <div id="totalEarnedStat" class="v small green">¥0</div>
           </div>
           <div class="stat">
@@ -343,15 +344,8 @@
       </section>
 
       <section class="card">
-        <h2>支出・収入を追加</h2>
+        <h2>支出を追加</h2>
         <div class="inputs three">
-          <div class="field">
-            <label for="txType">種類</label>
-            <select id="txType">
-              <option value="expense">支出</option>
-              <option value="income">臨時収入</option>
-            </select>
-          </div>
           <div class="field">
             <label for="txCategory">カテゴリ</label>
             <select id="txCategory"></select>
@@ -362,7 +356,7 @@
           </div>
           <div class="field">
             <label for="txName">内容</label>
-            <input id="txName" placeholder="例: コンビニ / ゲーム / フリマ売上">
+            <input id="txName" placeholder="例: コンビニ / ゲーム / 服">
           </div>
           <div class="field">
             <label for="txDate">日時</label>
@@ -374,7 +368,7 @@
           </div>
         </div>
         <div class="actions" style="margin-top:14px">
-          <button class="greenBtn" id="addTx">追加する</button>
+          <button class="greenBtn" id="addTx">支出を追加</button>
         </div>
       </section>
 
@@ -411,11 +405,11 @@
         </div>
         <div class="stats four">
           <div class="stat">
-            <div class="k">年間給与積み上げ</div>
+            <div class="k">年間給与累計</div>
             <div id="annualSalary" class="v small green">¥0</div>
           </div>
           <div class="stat">
-            <div class="k">ボーナス・臨時収入</div>
+            <div class="k">年間ボーナス・臨時収入</div>
             <div id="annualBonus" class="v small green">¥0</div>
           </div>
           <div class="stat">
@@ -728,8 +722,8 @@
     const amount = parseNumber(el("txAmount").value, 0);
     if(!(amount > 0)) return;
     state.transactions.unshift({
-      id: uid(), type: el("txType").value, category: el("txCategory").value || "その他",
-      name: String(el("txName").value || "").trim() || (el("txType").value === "expense" ? "支出" : "臨時収入"),
+      id: uid(), type: "expense", category: el("txCategory").value || "その他",
+      name: String(el("txName").value || "").trim() || "支出",
       amount, createdAt: new Date(el("txDate").value || nowLocalInputValue()).toISOString()
     });
     el("txAmount").value = ""; el("txName").value = ""; el("txDate").value = nowLocalInputValue();
@@ -861,11 +855,14 @@
     const monthEntriesAuto = autoEntriesAll.filter(x => isSameMonth(new Date(x.createdAt), now));
     const spentThisMonth = sumAmount(monthEntriesManual.filter(x => x.type === "expense")) + sumAmount(monthEntriesAuto);
 
+    const currentYearStart = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+    const currentYearSalary = accruedSalaryBetween(currentYearStart, now, state);
+
     const yearStart = new Date(annualCursorYear, 0, 1, 0, 0, 0, 0);
     const yearEnd = new Date(annualCursorYear + 1, 0, 1, 0, 0, 0, 0);
-    const annualSalaryStart = trackingStart ? new Date(Math.max(trackingStart.getTime(), yearStart.getTime())) : null;
+    const annualSalaryStart = yearStart;
     const annualSalaryEnd = new Date(Math.min(now.getTime(), yearEnd.getTime()));
-    const annualSalary = trackingStart && annualSalaryEnd > annualSalaryStart ? accruedSalaryBetween(annualSalaryStart, annualSalaryEnd, state) : 0;
+    const annualSalary = annualSalaryEnd > annualSalaryStart ? accruedSalaryBetween(annualSalaryStart, annualSalaryEnd, state) : 0;
     const annualManual = manualEntries.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
     const annualAuto = autoEntriesAll.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
     const annualExtraIncome = sumAmount(annualManual.filter(x => x.type === "income"));
@@ -916,7 +913,7 @@
 
     el("balanceStat").textContent = yen(bankBalance);
     el("balanceStat").className = "v small " + (bankBalance < 0 ? "red" : "");
-    el("totalEarnedStat").textContent = yen(totalEarned);
+    el("totalEarnedStat").textContent = yen(currentYearSalary);
     el("spentThisMonth").textContent = yen(spentThisMonth);
     el("earnedToday").textContent = yen(earnedToday);
 
