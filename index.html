@@ -184,9 +184,6 @@ details.foldCard[open] > summary{margin-bottom:12px}
   border-radius:16px;background:#fff
 }
 .checkboxRow input{width:auto;transform:scale(1.15)}
-.helperCard{
-  padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:#fbfcff
-}
     .footerNote{font-size:12px;color:var(--muted);line-height:1.7;padding:6px 2px 0}
   </style>
 </head>
@@ -202,24 +199,22 @@ details.foldCard[open] > summary{margin-bottom:12px}
 
     <section class="card hero">
       <div class="heroHeader">
-        <div class="heroTitlePill">🌊 給与の積み上がり</div>
+        <div class="heroTitlePill">🌊 いまの増加ペース</div>
       </div>
       <div class="heroCenter">
         <div id="statusPill" class="statusPill idle"><span class="statusDot"></span><span id="statusText">未設定</span></div>
-        <div class="mini" style="margin-top:14px;color:#6f7da8;font-weight:700">給料日から次の給料日までで積み上がった給与</div>
+        <div class="mini" style="margin-top:14px;color:#6f7da8;font-weight:700">給料日から次の給料日までの進み具合</div>
         <div id="cycleAccruedHero" class="heroMoney">¥0</div>
       </div>
       <div class="heroBottom">⏱️ 秒給 <span id="perSecHero">¥0.0000</span></div>
       <div class="heroMeta">
         <div class="heroBadge">現在の残高: <span id="balanceHero">¥0</span></div>
-        <div class="heroBadge">残高 = 初期残高 + 給与 + 臨時収入 - 支出 - 固定費</div>
         <div class="heroBadge">給料日: 毎月 <span id="paydayHero">-</span> 日</div>
         <div class="heroBadge">初期残高: <span id="bankStartHero">¥0</span></div>
       </div>
     </section>
 
     <div class="grid" style="margin-top:14px">
-
       <section class="card">
         <div class="sectionHead">
           <div class="sectionTitle"><span class="sectionIcon">⚙️</span> 基本設定</div>
@@ -242,7 +237,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
             </div>
             <div class="field salaryModeMonthly">
               <label for="monthSalary">月給（円）</label>
-              <input id="monthSalary" inputmode="numeric" placeholder="例: 250000">
+              <input id="monthSalary" inputmode="numeric" placeholder="例: 172386">
             </div>
             <div class="field salaryModeHourly hidden">
               <label for="hourlyWage">時給（円）</label>
@@ -293,56 +288,35 @@ details.foldCard[open] > summary{margin-bottom:12px}
           </div>
 
           <div class="field">
-            <label>通常の勤務曜日</label>
+            <label>勤務曜日</label>
             <div class="weekdayRow" id="weekdayRow"></div>
           </div>
 
           <div class="field">
-            <label>会社の休み設定</label>
+            <label>休日設定</label>
             <label class="checkboxRow">
               <input id="useJapaneseHolidays" type="checkbox">
               <span>祝日は休みにする</span>
             </label>
-            <div class="helper" style="margin-top:8px">休日出勤や平日特別休暇がある日は、下の個別の日付設定で上書きできます。</div>
-          </div>
-
-          <div class="helperCard" style="margin-top:12px">
-            <div style="font-weight:900;margin-bottom:10px">個別の休み・出勤日</div>
-            <div class="inputs three">
-              <div class="field">
-                <label for="overrideDate">日付</label>
-                <input id="overrideDate" type="date">
-              </div>
-              <div class="field">
-                <label for="overrideType">種類</label>
-                <select id="overrideType">
-                  <option value="off">休みにする</option>
-                  <option value="work">出勤日にする</option>
-                </select>
-              </div>
-            </div>
-            <div class="actions" style="margin-top:12px">
-              <button class="ghost" id="addOverride">日付を追加</button>
-            </div>
-            <div id="overrideList" class="list" style="margin-top:12px"></div>
+            <div class="helper" style="margin-top:8px">休日出勤や平日特別休暇は、カレンダーの日付をタップしてその日だけ上書きできます。</div>
           </div>
 
           <div class="salaryPreview">
             <div class="salaryBadge"><span id="salaryBadgeLabel">月給</span>: <span id="salaryBadgeValue">¥0</span></div>
             <div class="salaryInfoCard">
               <div class="salaryInfoRow"><span class="salaryInfoIcon">🧮</span> <span id="previewSalaryMode">給与方式: 未設定</span></div>
-              <div class="salaryInfoRow"><span class="salaryInfoIcon">🕒</span> <span id="previewWorkTime">未設定</span></div>
-              <div class="salaryInfoRow"><span class="salaryInfoIcon">📅</span> <span id="previewWorkDays">未設定</span></div>
-              <div class="salaryInfoRow"><span class="salaryInfoIcon">☕</span> <span id="previewBreak">休憩: 未設定</span></div>
-              <div class="salaryInfoRow"><span class="salaryInfoIcon">💴</span> <span id="previewPayday">給料日: 未設定</span></div>
-              <div class="salaryInfoRow"><span class="salaryInfoIcon">🏦</span> <span id="previewBankStart">初期残高: 未設定</span></div>
+              <div class="salaryInfoRow"><span class="salaryInfoIcon">🕒</span> <span id="previewWorkTime">08:30 - 17:30</span></div>
+              <div class="salaryInfoRow"><span class="salaryInfoIcon">📅</span> <span id="previewWorkDays">月・火・水・木・金</span></div>
+              <div class="salaryInfoRow"><span class="salaryInfoIcon">☕</span> <span id="previewBreak">休憩: 12:00 - 13:00</span></div>
+              <div class="salaryInfoRow"><span class="salaryInfoIcon">💴</span> <span id="previewPayday">給料日: 毎月25日</span></div>
+              <div class="salaryInfoRow"><span class="salaryInfoIcon">🏦</span> <span id="previewBankStart">初期銀行残高: ¥0</span></div>
               <div class="salaryInfoRow salaryModeHourly hidden" id="previewHourlyRow"><span class="salaryInfoIcon">💵</span> <span id="previewHourlyWage">時給: 未設定</span></div>
               <div class="salaryInfoRow salaryModeHourly hidden hourlyCalcMonthlyDays hidden" id="previewMonthlyDaysRow"><span class="salaryInfoIcon">🗓️</span> <span id="previewMonthlyDays">月の出勤日数: 未設定</span></div>
               <div class="salaryBottomRate"><span id="previewSalaryLabel">月給</span>: <span id="previewSalaryAmount">¥0</span> / 秒給: <span id="previewPerSec">¥0</span></div>
             </div>
           </div>
 
-          <div class="note">上の大きい金額は「今の給料日区間で積み上がった給与」です。サマリーは累計・前年・今年・来年で切り替えられます。残高は「初期銀行残高 + 給与の積み上がり + 臨時収入 - 支出 - 固定費」です。</div>
+          <div class="note">銀行残高は「初期銀行残高 + 給与の積み上がり + 臨時収入 - 支出 - 固定費」で計算します。</div>
         </details>
       </section>
 
@@ -357,7 +331,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
             <input id="savingGoal" inputmode="numeric" placeholder="例: 500000">
           </div>
           <div class="field">
-            <label for="trackingStart">残高計算の開始日時</label>
+            <label for="trackingStart">残高計算の基準日時</label>
             <input id="trackingStart" type="datetime-local">
           </div>
         </div>
@@ -373,8 +347,37 @@ details.foldCard[open] > summary{margin-bottom:12px}
       </section>
 
       <section class="card">
-        <h2>支出を追加</h2>
+        <h2>サマリー</h2>
+        <div class="stats four">
+          <div class="stat">
+            <div class="k">現在の残高</div>
+            <div id="balanceStat" class="v small">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">今年の給与累計</div>
+            <div id="totalEarnedStat" class="v small green">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">今月の支出</div>
+            <div id="spentThisMonth" class="v small red">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">今日増えた分</div>
+            <div id="earnedToday" class="v small green">¥0</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>支出・収入を追加</h2>
         <div class="inputs three">
+          <div class="field">
+            <label for="txType">種類</label>
+            <select id="txType">
+              <option value="expense">支出</option>
+              <option value="income">臨時収入</option>
+            </select>
+          </div>
           <div class="field">
             <label for="txCategory">カテゴリ</label>
             <select id="txCategory"></select>
@@ -385,7 +388,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
           </div>
           <div class="field">
             <label for="txName">内容</label>
-            <input id="txName" placeholder="例: コンビニ / ゲーム / 服">
+            <input id="txName" placeholder="例: コンビニ / ゲーム / フリマ売上">
           </div>
           <div class="field">
             <label for="txDate">日時</label>
@@ -397,7 +400,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
           </div>
         </div>
         <div class="actions" style="margin-top:14px">
-          <button class="greenBtn" id="addTx">支出を追加</button>
+          <button class="greenBtn" id="addTx">追加する</button>
         </div>
       </section>
 
@@ -421,6 +424,35 @@ details.foldCard[open] > summary{margin-bottom:12px}
           <button class="greenBtn" id="addBonus">追加する</button>
         </div>
         <div class="note">ここから追加した金額は「ボーナス」カテゴリの収入として記録されます。</div>
+      </section>
+
+      <section class="card">
+        <div class="calendarHeader">
+          <div class="calendarTitle" id="annualTitle">年間サマリー 2026年</div>
+          <div class="actions">
+            <button class="ghost" id="prevYear">前年</button>
+            <button class="ghost" id="thisYear">今年</button>
+            <button class="ghost" id="nextYear">翌年</button>
+          </div>
+        </div>
+        <div class="stats four">
+          <div class="stat">
+            <div class="k">年間給与積み上げ</div>
+            <div id="annualSalary" class="v small green">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">ボーナス・臨時収入</div>
+            <div id="annualBonus" class="v small green">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">年間支出</div>
+            <div id="annualExpense" class="v small red">¥0</div>
+          </div>
+          <div class="stat">
+            <div class="k">年間収支</div>
+            <div id="annualNet" class="v small">¥0</div>
+          </div>
+        </div>
       </section>
 
       <section class="card">
@@ -486,42 +518,6 @@ details.foldCard[open] > summary{margin-bottom:12px}
         </div>
         <div id="historyList" class="list" style="margin-top:14px"></div>
       </section>
-
-      <section class="card">
-        <h2>サマリー</h2>
-        <div class="chipRow" id="periodSummaryChips">
-          <button class="chip active" data-period="cumulative">累計</button>
-          <button class="chip" data-period="prev">前年</button>
-          <button class="chip" data-period="current">今年</button>
-          <button class="chip" data-period="next">来年</button>
-        </div>
-        <div class="stats four" style="margin-top:14px">
-          <div class="stat">
-            <div class="k">給与（期間内）</div>
-            <div id="summarySalary" class="v small green">¥0</div>
-          </div>
-          <div class="stat">
-            <div class="k">ボーナス・臨時収入</div>
-            <div id="summaryBonus" class="v small green">¥0</div>
-          </div>
-          <div class="stat">
-            <div class="k">支出</div>
-            <div id="summaryExpense" class="v small red">¥0</div>
-          </div>
-          <div class="stat">
-            <div class="k">収支</div>
-            <div id="summaryNet" class="v small">¥0</div>
-          </div>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <div class="mini muted">現在の残高</div>
-          <div id="balanceStat" class="mini" style="font-weight:900">¥0</div>
-        </div>
-        <div class="row" style="margin-top:6px">
-          <div class="mini muted">今日増えた分</div>
-          <div id="earnedToday" class="mini" style="font-weight:900">¥0</div>
-        </div>
-      </section>
     </div>
 
 
@@ -546,14 +542,14 @@ details.foldCard[open] > summary{margin-bottom:12px}
             <div id="dayModalNet" class="v">¥0</div>
           </div>
         </div>
-        <div class="helperCard" style="margin-top:14px">
-          <div style="font-weight:900;margin-bottom:10px">この日の勤務上書き</div>
+        <div style="margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:#fbfcff">
+          <div style="font-weight:900;margin-bottom:8px">この日の勤務上書き</div>
           <div class="actions">
             <button class="ghost" id="modalSetOff">この日は休みにする</button>
             <button class="ghost" id="modalSetWork">この日は出勤日にする</button>
             <button class="ghost" id="modalClearOverride">上書きを消す</button>
           </div>
-          <div class="helper" id="dayModalOverrideState" style="margin-top:8px">この日の上書き設定はありません</div>
+          <div id="dayModalOverrideState" class="helper" style="margin-top:8px">この日の上書き設定はありません</div>
         </div>
         <div id="dayModalList" class="list"></div>
       </div>
@@ -600,8 +596,8 @@ details.foldCard[open] > summary{margin-bottom:12px}
   let state = loadState();
   let summaryRange = "month";
   let historyFilter = "all";
-  let periodSummaryMode = "cumulative";
   let calendarCursor = new Date();
+  let annualCursorYear = new Date().getFullYear();
   let calendarDetailMap = new Map();
   let currentModalDateKey = "";
 
@@ -630,7 +626,9 @@ details.foldCard[open] > summary{margin-bottom:12px}
     el("addTx").addEventListener("click", addTransaction);
     el("addBonus").addEventListener("click", addBonusIncome);
     el("addFixed").addEventListener("click", addRecurringExpense);
-    el("addOverride").addEventListener("click", addDayOverride);
+    el("prevYear").addEventListener("click", () => { annualCursorYear -= 1; render(); });
+    el("thisYear").addEventListener("click", () => { annualCursorYear = new Date().getFullYear(); render(); });
+    el("nextYear").addEventListener("click", () => { annualCursorYear += 1; render(); });
 
     document.querySelectorAll("#summaryRangeChips .chip").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -643,13 +641,6 @@ details.foldCard[open] > summary{margin-bottom:12px}
       btn.addEventListener("click", () => {
         historyFilter = btn.dataset.filter;
         setActive(btn, "#historyFilterChips .chip");
-        render();
-      });
-    });
-    document.querySelectorAll("#periodSummaryChips .chip").forEach(btn => {
-      btn.addEventListener("click", () => {
-        periodSummaryMode = btn.dataset.period;
-        setActive(btn, "#periodSummaryChips .chip");
         render();
       });
     });
@@ -701,10 +692,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
     el("txDate").value = nowLocalInputValue();
     const bonusDateEl = el("bonusDate");
     if (bonusDateEl) bonusDateEl.value = nowLocalInputValue();
-    const overrideDateEl = el("overrideDate");
-    if (overrideDateEl) overrideDateEl.value = "";
     updateSalaryModeUI();
-    renderOverrideList();
   }
   function renderWeekdayChips(){
     const root = el("weekdayRow"); root.innerHTML = "";
@@ -761,7 +749,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
   function clearAll(){
     if(!confirm("設定・履歴・固定費をすべて消しますか？")) return;
     state = structuredClone(defaults); calendarCursor = new Date();
-    hydrateInputs(); renderWeekdayChips(); renderCategoryOptions(); renderOverrideList(); saveState(); render();
+    hydrateInputs(); renderWeekdayChips(); renderCategoryOptions(); saveState(); render();
   }
   function seedDemo(){
     addCategoryIfNeeded("プレゼント");
@@ -771,55 +759,8 @@ details.foldCard[open] > summary{margin-bottom:12px}
     state.transactions.unshift({id:uid(), type:"income", category:"その他", name:"フリマ売上", amount:2500, createdAt:new Date(now.getTime()-54*3600*1000).toISOString()});
     state.recurringExpenses.unshift({id:uid(), category:"固定費", name:"サブスク", amount:980, day:12});
     state.recurringExpenses.unshift({id:uid(), category:"固定費", name:"通信費", amount:5000, day:25});
-    saveState(); renderCategoryOptions(); renderOverrideList(); render();
+    saveState(); renderCategoryOptions(); render();
   }
-
-function dateKeyLocal(dateLike){
-  const d = new Date(dateLike);
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-
-function renderOverrideList(){
-  const root = el("overrideList");
-  if(!root) return;
-  if(!Array.isArray(state.dayOverrides) || !state.dayOverrides.length){
-    root.innerHTML = `<div class="empty">まだ個別の日付設定はありません</div>`;
-    return;
-  }
-  root.innerHTML = "";
-  state.dayOverrides
-    .slice()
-    .sort((a,b) => String(a.date).localeCompare(String(b.date)))
-    .forEach(item => {
-      const div = document.createElement("div");
-      div.className = "item";
-      div.innerHTML = `
-        <div class="meta">
-          <div class="name">${escapeHtml(item.date)}</div>
-          <div class="pill">${item.type === "off" ? "休み" : "出勤日"}</div>
-        </div>
-        <button class="ghost">削除</button>
-      `;
-      div.querySelector("button").addEventListener("click", () => {
-        state.dayOverrides = state.dayOverrides.filter(x => x.date !== item.date);
-        saveState();
-        renderOverrideList();
-        render();
-      });
-      root.appendChild(div);
-    });
-}
-
-function addDayOverride(){
-  const date = String(el("overrideDate").value || "").trim();
-  const type = String(el("overrideType").value || "off");
-  if(!date) return;
-  state.dayOverrides = (state.dayOverrides || []).filter(x => x.date !== date);
-  state.dayOverrides.push({ date, type });
-  saveState();
-  renderOverrideList();
-  render();
-}
   function addCategoryIfNeeded(name){
     const clean = String(name || "").trim();
     if(clean) state.categories = dedupe([clean, ...state.categories]);
@@ -836,8 +777,8 @@ function addDayOverride(){
     const amount = parseNumber(el("txAmount").value, 0);
     if(!(amount > 0)) return;
     state.transactions.unshift({
-      id: uid(), type: "expense", category: el("txCategory").value || "その他",
-      name: String(el("txName").value || "").trim() || "支出",
+      id: uid(), type: el("txType").value, category: el("txCategory").value || "その他",
+      name: String(el("txName").value || "").trim() || (el("txType").value === "expense" ? "支出" : "臨時収入"),
       amount, createdAt: new Date(el("txDate").value || nowLocalInputValue()).toISOString()
     });
     el("txAmount").value = ""; el("txName").value = ""; el("txDate").value = nowLocalInputValue();
@@ -969,32 +910,18 @@ function addDayOverride(){
     const monthEntriesAuto = autoEntriesAll.filter(x => isSameMonth(new Date(x.createdAt), now));
     const spentThisMonth = sumAmount(monthEntriesManual.filter(x => x.type === "expense")) + sumAmount(monthEntriesAuto);
 
-const currentYear = now.getFullYear();
-const buildYearSummary = (year) => {
-  const start = new Date(year, 0, 1, 0, 0, 0, 0);
-  const end = new Date(year + 1, 0, 1, 0, 0, 0, 0);
-  const salaryEnd = new Date(Math.min(now.getTime(), end.getTime()));
-  const salary = salaryEnd > start ? accruedSalaryBetween(start, salaryEnd, state) : 0;
-  const manual = manualEntries.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === year; });
-  const auto = autoEntriesAll.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === year; });
-  const bonus = sumAmount(manual.filter(x => x.type === "income"));
-  const expense = sumAmount(manual.filter(x => x.type === "expense")) + sumAmount(auto);
-  const net = salary + bonus - expense;
-  return { salary, bonus, expense, net };
-};
+    const currentYearStart = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+    const currentYearSalary = accruedSalaryBetween(currentYearStart, now, state);
 
-const summaries = {
-  cumulative: {
-    salary: totalEarned,
-    bonus: manualIncomeTotal,
-    expense: manualExpenseTotal + autoExpenseTotal,
-    net: totalEarned + manualIncomeTotal - manualExpenseTotal - autoExpenseTotal
-  },
-  prev: buildYearSummary(currentYear - 1),
-  current: buildYearSummary(currentYear),
-  next: buildYearSummary(currentYear + 1)
-};
-const selectedSummary = summaries[periodSummaryMode] || summaries.cumulative;
+    const yearStart = new Date(annualCursorYear, 0, 1, 0, 0, 0, 0);
+    const yearEnd = new Date(annualCursorYear + 1, 0, 1, 0, 0, 0, 0);
+    const annualSalaryEnd = new Date(Math.min(now.getTime(), yearEnd.getTime()));
+    const annualSalary = annualSalaryEnd > yearStart ? accruedSalaryBetween(yearStart, annualSalaryEnd, state) : 0;
+    const annualManual = manualEntries.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
+    const annualAuto = autoEntriesAll.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
+    const annualExtraIncome = sumAmount(annualManual.filter(x => x.type === "income"));
+    const annualExpense = sumAmount(annualManual.filter(x => x.type === "expense")) + sumAmount(annualAuto);
+    const annualNet = annualSalary + annualExtraIncome - annualExpense;
 
     const configured = monthSalary > 0 && state.payday !== "" && state.workStart && state.workEnd && (
       ((state.hourlyCalcMode || "weekdays") === "monthlyDays" && Number(state.monthlyWorkDays || 0) > 0) ||
@@ -1038,21 +965,23 @@ const selectedSummary = summaries[periodSummaryMode] || summaries.cumulative;
     el("goalText").textContent = `${yen(Math.max(0, bankBalance))} / ${savingGoal > 0 ? yen(savingGoal) : "未設定"}`;
     el("goalRemain").textContent = savingGoal > 0 ? yen(Math.max(0, savingGoal - Math.max(0, bankBalance))) : "未設定";
 
-el("balanceStat").textContent = yen(bankBalance);
-el("balanceStat").className = "mini " + (bankBalance < 0 ? "red" : "");
-el("earnedToday").textContent = yen(earnedToday);
+    el("balanceStat").textContent = yen(bankBalance);
+    el("balanceStat").className = "v small " + (bankBalance < 0 ? "red" : "");
+    el("totalEarnedStat").textContent = yen(currentYearSalary);
+    el("spentThisMonth").textContent = yen(spentThisMonth);
+    el("earnedToday").textContent = yen(earnedToday);
 
-el("summarySalary").textContent = yen(selectedSummary.salary);
-el("summaryBonus").textContent = yen(selectedSummary.bonus);
-el("summaryExpense").textContent = yen(selectedSummary.expense);
-el("summaryNet").textContent = yen(selectedSummary.net);
-el("summaryNet").className = "v small " + (selectedSummary.net < 0 ? "red" : "green");
+    el("annualTitle").textContent = `年間サマリー ${annualCursorYear}年`;
+    el("annualSalary").textContent = yen(annualSalary);
+    el("annualBonus").textContent = yen(annualExtraIncome);
+    el("annualExpense").textContent = yen(annualExpense);
+    el("annualNet").textContent = yen(annualNet);
+    el("annualNet").className = "v small " + (annualNet < 0 ? "red" : "green");
 
-renderFixedList();
-renderOverrideList();
-renderCategorySummary(allEntries, now);
-renderCalendar(allEntries, calendarCursor);
-renderHistory(allEntries);
+    renderFixedList();
+    renderCategorySummary(allEntries, now);
+    renderCalendar(allEntries, calendarCursor);
+    renderHistory(allEntries);
   }
 
   function formatWorkDays(days){ return Array.isArray(days) && days.length ? days.slice().sort((a,b)=>a-b).map(d => DOW[d]).join("・") : "未設定"; }
@@ -1072,6 +1001,11 @@ renderHistory(allEntries);
     const [h,m] = String(v || "0:0").split(":").map(Number);
     return (h || 0) * 60 + (m || 0);
   }
+
+function dateKeyLocal(dateLike){
+  const d = new Date(dateLike);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
 
 function nthWeekdayOfMonth(year, month, weekday, nth){
   const first = new Date(year, month, 1);
@@ -1330,7 +1264,6 @@ function applyDayOverrideFromModal(mode){
     state.dayOverrides.push({ date: currentModalDateKey, type: mode });
   }
   saveState();
-  renderOverrideList();
   render();
   openDayModal(currentModalDateKey);
 }
@@ -1344,7 +1277,6 @@ function getOverrideStateText(dateKey){
   }
   return "この日の上書き設定はありません";
 }
-
   function openDayModal(dateKey){
     const entries = (calendarDetailMap.get(dateKey) || []).slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
     const dateObj = new Date(`${dateKey}T00:00:00`);
