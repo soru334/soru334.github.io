@@ -618,14 +618,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
 
   const el = id => document.getElementById(id);
 
-  fillSelects();
-  hydrateInputs();
-  renderWeekdayChips();
-  renderCategoryOptions();
-  renderDow();
-  bindEvents();
-  render();
-  setInterval(render, 1000);
+  // init moved to the end so holiday helpers are ready before first render
 
   function bindEvents(){
     el("saveSalarySettings").addEventListener("click", saveSettings);
@@ -1485,6 +1478,16 @@ function getOverrideStateText(dateKey){
   function yenRate(value){ return `¥${Number(value || 0).toFixed(4)}`; }
   function formatDateTimeShort(d){ return new Intl.DateTimeFormat("ja-JP",{year:"2-digit",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}).format(d); }
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, ch => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[ch])); }
+
+  fillSelects();
+  hydrateInputs();
+  renderWeekdayChips();
+  renderCategoryOptions();
+  renderDow();
+  bindEvents();
+  render();
+  setInterval(render, 1000);
+
 })();
 </script>
 </body>
