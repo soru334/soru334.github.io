@@ -313,9 +313,9 @@ details.foldCard[open] > summary{margin-bottom:12px}
             <label>休日設定</label>
             <label class="checkboxRow">
               <input id="useJapaneseHolidays" type="checkbox">
-              <span>祝日は休みにする</span>
+              <span>祝日・振替休日は休みにする</span>
             </label>
-            <div class="helper" style="margin-top:8px">休日出勤や平日特別休暇は、カレンダーの日付をタップしてその日だけ上書きできます。</div>
+            <div class="helper" style="margin-top:8px">祝日・振替休日・休日出勤・平日特別休暇は、カレンダーの日付をタップしてその日だけ上書きできます。</div>
           </div>
 
           <div class="salaryPreview">
@@ -974,7 +974,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
     el("previewWorkTime").textContent = state.workStart && state.workEnd ? `${state.workStart} - ${state.workEnd}` : "未設定";
     el("previewWorkDays").textContent = hourlyCalcMode === "monthlyDays"
       ? (state.monthlyWorkDays === "" ? "出勤日数未設定" : `月の出勤日数: ${Number(state.monthlyWorkDays)}日`)
-      : formatWorkDays(state.workDays) + (state.useJapaneseHolidays ? " / 祝日休み" : "");
+      : formatWorkDays(state.workDays) + (state.useJapaneseHolidays ? " / 祝日・振替休日休み" : "");
     el("previewBreak").textContent = state.breakStart && state.breakEnd ? `休憩: ${state.breakStart} - ${state.breakEnd}` : "休憩: 未設定";
     el("previewPayday").textContent = state.payday ? `給料日: 毎月${state.payday}日` : "給料日: 未設定";
     el("previewBankStart").textContent = state.bankStartBalance === "" ? "初期残高: 未設定" : `初期残高: ${yen(bankStartBalance)}`;
@@ -1041,12 +1041,12 @@ function autumnEquinoxDay(year){
   return Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
 }
 
-function holidayKey(year, month, day){
-  return `${year}-${pad(month+1)}-${pad(day)}`;
-}
-
 function japanBaseHolidayName(year, month, day){
   const m = month + 1;
+
+  if(year === 2019 && m === 5 && day === 1) return "天皇の即位の日";
+  if(year === 2019 && m === 10 && day === 22) return "即位礼正殿の儀";
+
   if(m === 1 && day === 1) return "元日";
   if(m === 1 && day === nthWeekdayOfMonth(year, month, 1, 2)) return "成人の日";
   if(m === 2 && day === 11) return "建国記念の日";
@@ -1056,67 +1056,75 @@ function japanBaseHolidayName(year, month, day){
   if(m === 5 && day === 3) return "憲法記念日";
   if(m === 5 && day === 4) return "みどりの日";
   if(m === 5 && day === 5) return "こどもの日";
-  if(m === 7 && day === nthWeekdayOfMonth(year, month, 1, 3)) return "海の日";
-  if(m === 8 && day === 11) return "山の日";
+
+  if(year === 2020){
+    if(m === 7 && day === 23) return "海の日";
+    if(m === 7 && day === 24) return "スポーツの日";
+    if(m === 8 && day === 10) return "山の日";
+  } else if(year === 2021){
+    if(m === 7 && day === 22) return "海の日";
+    if(m === 7 && day === 23) return "スポーツの日";
+    if(m === 8 && day === 8) return "山の日";
+  } else {
+    if(m === 7 && day === nthWeekdayOfMonth(year, month, 1, 3)) return "海の日";
+    if(m === 8 && day === 11) return "山の日";
+    if(m === 10 && day === nthWeekdayOfMonth(year, month, 1, 2)) return "スポーツの日";
+  }
+
   if(m === 9 && day === nthWeekdayOfMonth(year, month, 1, 3)) return "敬老の日";
   if(m === 9 && day === autumnEquinoxDay(year)) return "秋分の日";
-  if(m === 10 && day === nthWeekdayOfMonth(year, month, 1, 2)) return "スポーツの日";
   if(m === 11 && day === 3) return "文化の日";
   if(m === 11 && day === 23) return "勤労感謝の日";
   return "";
 }
 
-const holidayCache = new Map();
+const japanHolidayYearCache = new Map();
 
-function buildJapanHolidaySet(year){
-  if(holidayCache.has(year)) return holidayCache.get(year);
+function buildJapanHolidayMap(year){
+  const map = new Map();
+  const start = new Date(year, 0, 1);
+  const end = new Date(year + 1, 0, 1);
 
-  const holidays = new Set();
+  for(let d = new Date(start); d < end; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)){
+    const name = japanBaseHolidayName(d.getFullYear(), d.getMonth(), d.getDate());
+    if(name) map.set(dateKeyLocal(d), { name, type: "holiday" });
+  }
 
-  // base holidays
-  for(let month=0; month<12; month++){
-    const last = lastDayOfMonth(year, month);
-    for(let day=1; day<=last; day++){
-      if(japanBaseHolidayName(year, month, day)){
-        holidays.add(holidayKey(year, month, day));
-      }
+  for(let d = new Date(start); d < end; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)){
+    const key = dateKeyLocal(d);
+    if(map.has(key)) continue;
+    if(d.getDay() === 0 || d.getDay() === 6) continue;
+    const prevKey = dateKeyLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1));
+    const nextKey = dateKeyLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1));
+    if(map.has(prevKey) && map.has(nextKey)){
+      map.set(key, { name: "国民の休日", type: "citizen" });
     }
   }
 
-  // citizen's holiday
-  for(let month=0; month<12; month++){
-    const last = lastDayOfMonth(year, month);
-    for(let day=2; day<last; day++){
-      const current = new Date(year, month, day);
-      const prevKey = holidayKey(current.getFullYear(), current.getMonth(), current.getDate()-1);
-      const nextKey = holidayKey(current.getFullYear(), current.getMonth(), current.getDate()+1);
-      const curKey = holidayKey(year, month, day);
-      if(current.getDay() !== 0 && current.getDay() !== 6 && !holidays.has(curKey) && holidays.has(prevKey) && holidays.has(nextKey)){
-        holidays.add(curKey);
-      }
+  for(let d = new Date(start); d < end; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)){
+    const baseName = japanBaseHolidayName(d.getFullYear(), d.getMonth(), d.getDate());
+    if(!baseName || d.getDay() !== 0) continue;
+    let sub = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+    while(sub < end && map.has(dateKeyLocal(sub))){
+      sub = new Date(sub.getFullYear(), sub.getMonth(), sub.getDate() + 1);
+    }
+    if(sub < end){
+      const subKey = dateKeyLocal(sub);
+      if(!map.has(subKey)) map.set(subKey, { name: "振替休日", type: "substitute", source: baseName });
     }
   }
 
-  // substitute holidays: when a holiday falls on Sunday, next non-holiday becomes substitute
-  const originalHolidayDates = Array.from(holidays).sort();
-  for(const key of originalHolidayDates){
-    const d = new Date(key + "T00:00:00");
-    if(d.getDay() === 0){
-      const sub = new Date(d);
-      do {
-        sub.setDate(sub.getDate() + 1);
-      } while(holidays.has(holidayKey(sub.getFullYear(), sub.getMonth(), sub.getDate())));
-      holidays.add(holidayKey(sub.getFullYear(), sub.getMonth(), sub.getDate()));
-    }
-  }
+  return map;
+}
 
-  holidayCache.set(year, holidays);
-  return holidays;
+function getJapanHolidayInfo(date){
+  const year = date.getFullYear();
+  if(!japanHolidayYearCache.has(year)) japanHolidayYearCache.set(year, buildJapanHolidayMap(year));
+  return japanHolidayYearCache.get(year).get(dateKeyLocal(date)) || null;
 }
 
 function isJapanHoliday(date){
-  const holidays = buildJapanHolidaySet(date.getFullYear());
-  return holidays.has(holidayKey(date.getFullYear(), date.getMonth(), date.getDate()));
+  return !!getJapanHolidayInfo(date);
 }
 
 function getDayOverride(date, cfg){
@@ -1129,7 +1137,7 @@ function getDayOverride(date, cfg){
     const baseWorkday = Array.isArray(cfg.workDays) && cfg.workDays.includes(date.getDay());
     if(override === "off") return [];
     if(override !== "work"){
-      if(cfg.useJapaneseHolidays && isJapanHoliday(date)) return [];
+      if(cfg.useJapaneseHolidays && getJapanHolidayInfo(date)) return [];
       if(!baseWorkday) return [];
     }
     const ws = timeToMinutes(cfg.workStart), we = timeToMinutes(cfg.workEnd);
@@ -1294,15 +1302,17 @@ function getDayOverride(date, cfg){
       const expense = sumAmount(entries.filter(e => e.kind !== "income"));
       const income = sumAmount(entries.filter(e => e.kind === "income"));
       const today = isSameDay(cellDate, new Date());
-      const holiday = isCurrent && isJapanHoliday(cellDate);
+      const holidayInfo = isCurrent ? getJapanHolidayInfo(cellDate) : null;
+      const holiday = !!holidayInfo;
+      const holidayBadgeText = holidayInfo?.type === "substitute" ? "振替" : "祝";
       const dateKey = `${cellDate.getFullYear()}-${pad(cellDate.getMonth()+1)}-${pad(cellDate.getDate())}`;
       if(isCurrent) calendarDetailMap.set(dateKey, entries);
       const preview = entries.slice(0,2).map(e => {
         const m = categoryMeta(e.category), kind = e.kind === "income" ? "income" : e.kind === "auto" ? "auto" : "expense", sign = e.kind === "income" ? "+" : "-";
         return `<div class="dayEntry ${kind}">${m.icon} ${escapeHtml(e.name)} ${sign}${yen(e.amount)}</div>`;
       }).join("");
-      cells.push(`<div class="day ${muted ? "mutedCell" : ""} ${today ? "today" : ""} ${holiday ? "holiday" : ""}" ${isCurrent ? `data-date="${dateKey}"` : ""}>
-        <div class="dayNum ${holiday ? "holiday" : ""}">${cellDate.getDate()} ${holiday ? '<span class="holidayBadge">祝</span>' : ''}</div>
+      cells.push(`<div class="day ${muted ? "mutedCell" : ""} ${today ? "today" : ""} ${holiday ? "holiday" : ""}" ${isCurrent ? `data-date="${dateKey}"` : ""} ${holidayInfo ? `title="${escapeHtml(holidayInfo.name)}"` : ""}>
+        <div class="dayNum ${holiday ? "holiday" : ""}">${cellDate.getDate()} ${holiday ? `<span class="holidayBadge">${holidayBadgeText}</span>` : ''}</div>
         ${isCurrent && income ? `<div class="daySummary inc">+${yen(income)}</div>` : ""}
         ${isCurrent && expense ? `<div class="daySummary exp">-${yen(expense)}</div>` : ""}
         <div class="dayEntries">${preview}</div>
@@ -1381,7 +1391,8 @@ function getOverrideStateText(dateKey){
   if(found) return found.type === "off" ? "この日は休みに設定されています" : "この日は出勤日に設定されています";
   if(state.useJapaneseHolidays){
     const d = new Date(dateKey + "T00:00:00");
-    if(isJapanHoliday(d)) return "この日は祝日休みとして扱われます";
+    const holidayInfo = getJapanHolidayInfo(d);
+    if(holidayInfo) return `この日は${holidayInfo.name}として休み扱いです`;
   }
   return "この日の上書き設定はありません";
 }
