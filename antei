@@ -1,0 +1,1442 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#d2a01b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="ペース貯金" />
+  <title>ペース貯金</title>
+  <style>
+    :root{
+      --bg:#f5f7fc; --card:#fff; --text:#1a2438; --muted:#74809d; --line:#e6ebf6;
+      --gold:#5b76df; --gold2:#7da3ff; --gold-soft:#edf2ff;
+      --green:#35b45d; --red:#ef6b74; --blue:#4f7cff;
+      --shadow:0 14px 36px rgba(29,42,80,.08); --radius:24px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:linear-gradient(180deg,#f5f7fc 0%,#eef3ff 100%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif}
+    body{padding:env(safe-area-inset-top) 14px calc(28px + env(safe-area-inset-bottom))}
+    .wrap{max-width:980px;margin:0 auto}
+    .header{padding:10px 2px 14px}
+    .titleRow{display:flex;align-items:center;gap:12px}
+    .logo{width:54px;height:54px;border-radius:16px;background:#edf2ff;display:flex;align-items:center;justify-content:center;font-size:28px}
+    .title{font-size:34px;font-weight:900;color:#4a63c7}
+    .sub{color:var(--muted);line-height:1.7;margin-top:10px}
+    .grid{display:grid;gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .hero{
+      background:
+        radial-gradient(circle at 12% 18%, rgba(255,255,255,.34) 0 5px, transparent 7px),
+        radial-gradient(circle at 28% 12%, rgba(255,255,255,.28) 0 3px, transparent 5px),
+        radial-gradient(circle at 76% 18%, rgba(255,255,255,.30) 0 4px, transparent 6px),
+        radial-gradient(circle at 88% 28%, rgba(255,255,255,.26) 0 3px, transparent 5px),
+        linear-gradient(180deg,#6f8eff 0%,#5b76df 52%,#46b9e8 100%);
+      border:none;overflow:hidden;position:relative;color:#fff;padding:18px;
+    }
+    .hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.10)}
+    .hero:before{width:220px;height:220px;right:-70px;top:-60px}
+    .hero:after{width:180px;height:180px;left:-60px;bottom:-70px}
+    .heroHeader{text-align:left;position:relative;z-index:1}
+    .heroTitlePill{
+      display:inline-flex;align-items:center;gap:10px;background:rgba(50,78,170,.22);
+      border:1px solid rgba(255,255,255,.20);padding:16px 26px;border-radius:999px;font-size:18px;font-weight:900
+    }
+    .heroCenter{
+      position:relative;z-index:1;background:rgba(255,255,255,.95);border-radius:28px;padding:18px 18px 24px;
+      margin:18px 0 16px;max-width:none;color:#32498d;text-align:left;border:1px solid rgba(255,255,255,.8)
+    }
+    .statusPill{
+      display:inline-flex;align-items:center;gap:8px;background:#f3f3f3;border:1px solid #ddd;border-radius:999px;
+      padding:8px 16px;color:#6b6b6b;font-weight:900;font-size:14px
+    }
+    .statusDot{width:10px;height:10px;border-radius:50%;background:#7ac66c}
+    .statusPill.idle .statusDot{background:#c7c7c7}
+    .heroMoney{font-size:clamp(42px,8vw,68px);font-weight:900;line-height:1.05;margin:18px 0 0;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+    .heroBottom{
+      position:relative;z-index:1;display:flex;justify-content:flex-start;gap:12px;flex-wrap:wrap;background:rgba(50,78,170,.14);
+      border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:14px 16px;font-size:20px;font-weight:900
+    }
+    .heroMeta{position:relative;z-index:1;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+    .heroBadge{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.18);font-size:13px;font-weight:800}
+    .sectionHead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .sectionTitle{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:900;color:#4a63c7}
+    .sectionIcon{width:42px;height:42px;border-radius:14px;background:#edf2ff;display:flex;align-items:center;justify-content:center;font-size:22px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    button{
+      border:none;border-radius:16px;padding:13px 16px;font-size:15px;font-weight:900;cursor:pointer;background:#edf2ff;color:#4158b8
+    }
+    button.primary{background:linear-gradient(180deg,#6f8eff,#5b76df);color:#fff}
+    button.greenBtn{background:#3ab35d;color:#fff}
+    button.redBtn{background:#f56d73;color:#fff}
+    button.ghost{background:#faf8f2;color:#746b5b;border:1px solid var(--line)}
+    .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    @media (min-width:720px){
+      .stats.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+      .inputs.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .inputs.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    }
+    .stat{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fffdf7}
+    .stat .k{font-size:13px;color:var(--muted);margin-bottom:8px}
+    .stat .v{font-size:27px;font-weight:900;font-variant-numeric:tabular-nums}
+    .stat .v.small{font-size:22px}
+    .green{color:var(--green)} .red{color:var(--red)}
+    .inputs{display:grid;gap:12px}
+    .field{display:grid;gap:7px}
+    .field label{font-size:13px;color:var(--muted)}
+    input,select{
+      width:100%;border:1px solid var(--line);background:#fff;border-radius:16px;padding:13px 14px;
+      font-size:16px;color:var(--text);outline:none
+    }
+    input:focus,select:focus{border-color:#b9c9ff;box-shadow:0 0 0 4px #eef3ff}
+    .note{font-size:12px;color:var(--muted);line-height:1.7}
+    .row{display:flex;justify-content:space-between;gap:14px;align-items:center}
+    .mini{font-size:13px} .muted{color:var(--muted)}
+    .weekdayRow{display:flex;gap:8px;flex-wrap:wrap}
+    .dayChip{
+      padding:9px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;color:#7a6d55;font-size:13px;font-weight:900;cursor:pointer
+    }
+    .dayChip.active{background:#ffeeb2;border-color:#f0d46d;color:#a37000}
+    .salaryPreview{
+      border:1px solid #dbe4ff;border-radius:28px;background:linear-gradient(180deg,#f8fbff 0%,#edf3ff 100%);
+      box-shadow:0 20px 44px rgba(70,104,200,.10);padding:18px;margin-top:4px
+    }
+    .salaryBadge{
+      display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:18px;background:#fff;
+      border:1px solid #dbe4ff;color:#4a63c7;font-size:18px;font-weight:900
+    }
+    .salaryInfoCard{background:#fff;border-radius:26px;padding:18px;border:1px solid #e6ebf6;display:grid;gap:12px;margin-top:14px}
+    .salaryInfoRow{display:flex;align-items:center;gap:12px;color:#5b5547;font-size:18px}
+    .salaryInfoIcon{width:40px;height:40px;border-radius:12px;background:#edf2ff;display:flex;align-items:center;justify-content:center;font-size:20px}
+    .salaryBottomRate{background:#f6f9ff;border-radius:14px;padding:10px 12px;color:#4a63c7;font-weight:900;font-size:18px;border:1px solid #dbe4ff}
+    .progress{width:100%;height:14px;background:#f0f4ff;border-radius:999px;overflow:hidden;border:1px solid #dfe7ff}
+    .bar{height:100%;width:0%;background:linear-gradient(90deg,#70d6bc,#5a8bff)}
+    .chipRow{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px;color:#50607d;cursor:pointer}
+    .chip.active{background:#edf2ff;border-color:#cbd7ff;color:#4158b8;font-weight:900}
+    .list{display:grid;gap:10px}
+    .item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px 14px;border-radius:18px;border:1px solid var(--line);background:#fff}
+    .meta{display:grid;gap:5px}
+    .name{font-weight:900}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;background:#f8f6ef;color:#746b5b;border:1px solid #efe5c8}
+    .amount{font-weight:900;font-variant-numeric:tabular-nums}
+    .empty{padding:22px;border:1px dashed #d5dced;border-radius:18px;text-align:center;color:var(--muted);background:#fbfcff}
+    .summaryList{display:grid;gap:10px}
+    .summaryItem{display:grid;gap:8px;padding:12px 13px;border-radius:16px;background:#fff;border:1px solid var(--line)}
+    .barLine{height:10px;border-radius:999px;background:#f7f2df;overflow:hidden}
+    .barFill{height:100%;background:linear-gradient(90deg,#ffb65c,#ff7e7e)}
+    .tagIncome{background:#eef9f1;color:#0a7b52} .tagExpense{background:#fff0f2;color:#bf314b} .tagAuto{background:#fff7e8;color:#a86a00}
+    .iconBubble{
+      width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:17px;background:#f4f7ff;border:1px solid var(--line)
+    }
+    .iconLine{display:flex;align-items:center;gap:10px}
+    .calendarHeader{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+    .calendarTitle{font-size:18px;font-weight:900}
+    .calendarGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+    .dow{text-align:center;font-size:12px;color:var(--muted);padding:4px 0}
+    .day{min-height:110px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:8px;display:grid;gap:6px;align-content:start}
+    .day.mutedCell{background:#faf9f5;color:#b4ad9d}
+    .day.today{border-color:#bcd0ff;box-shadow:inset 0 0 0 2px #ecf2ff}
+
+    .day.holiday{background:#fff6f8;border-color:#ffd7df}
+    .dayNum.holiday{color:#d94b63}
+    .holidayBadge{
+      display:inline-block;padding:2px 6px;border-radius:999px;font-size:10px;font-weight:900;
+      background:#ffe5ea;color:#d94b63;border:1px solid #ffd0d8
+    }
+    .dayNum{font-size:12px;font-weight:900}
+    .daySummary{font-size:11px;font-weight:900}
+    .daySummary.exp{color:var(--red)} .daySummary.inc{color:var(--green)}
+    .dayEntries{display:grid;gap:4px}
+    .dayEntry{font-size:10px;line-height:1.3;padding:4px 6px;border-radius:10px;background:#f6f8ff;border:1px solid #eef2fb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dayEntry.expense{background:#fff4f6} .dayEntry.income{background:#eefaf5} .dayEntry.auto{background:#fff8ea}
+    .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+    .helper{font-size:12px;color:var(--muted);line-height:1.6}
+    .hidden{display:none !important}
+    .day{cursor:pointer}
+    .day:active{transform:scale(.995)}
+    .modalBackdrop{
+      position:fixed;inset:0;background:rgba(17,24,39,.38);display:none;z-index:30;padding:18px
+    }
+    .modalBackdrop.open{display:flex;align-items:flex-end;justify-content:center}
+    .modal{
+      width:min(680px,100%);max-height:78vh;background:#fff;border-radius:24px 24px 16px 16px;
+      border:1px solid var(--line);box-shadow:0 24px 48px rgba(29,42,80,.18);overflow:hidden
+    }
+    .modalHeader{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 16px 12px;border-bottom:1px solid var(--line)
+    }
+    .modalTitle{font-size:18px;font-weight:900}
+    .modalBody{padding:16px;overflow:auto;max-height:calc(78vh - 72px)}
+    .modalClose{
+      width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#f6f9ff;color:#5f6f96;font-size:18px;font-weight:900
+    }
+    .detailTotals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+    .detailCard{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fbfcff}
+    .detailCard .k{font-size:12px;color:var(--muted);margin-bottom:6px}
+    .detailCard .v{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums}
+
+
+details.foldCard{margin-top:14px}
+details.foldCard > summary{
+  list-style:none;cursor:pointer;padding:12px 14px;border:1px solid var(--line);
+  border-radius:16px;background:#f7f9ff;color:#4763bd;font-weight:900
+}
+details.foldCard > summary::-webkit-details-marker{display:none}
+details.foldCard[open] > summary{margin-bottom:12px}
+.checkboxRow{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);
+  border-radius:16px;background:#fff
+}
+.checkboxRow input{width:auto;transform:scale(1.15)}
+    
+    .summaryModalBackdrop{
+      position:fixed;inset:0;background:rgba(20,28,48,.34);display:none;z-index:30
+    }
+    .summaryModalBackdrop.open{display:block}
+    .summaryModal{
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      width:min(92vw,720px);max-height:84vh;overflow:auto;background:#fff;border-radius:24px;
+      box-shadow:0 18px 40px rgba(34,50,96,.20);padding:18px
+    }
+.footerNote{font-size:12px;color:var(--muted);line-height:1.7;padding:6px 2px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="header">
+      <div class="titleRow">
+        <div class="logo">💰</div>
+        <div class="title">ペース貯金</div>
+      </div>
+      <div class="sub">銀行残高を基準に、働いた分が少しずつ積み上がる家計管理アプリです。</div>
+    </header>
+
+    <section class="card hero">
+      <div class="heroHeader">
+        <div class="heroTitlePill">🌊 いまの増加ペース</div>
+      </div>
+      <div id="summaryOpenArea" class="heroCenter" style="cursor:pointer">
+        <div id="statusPill" class="statusPill idle"><span class="statusDot"></span><span id="statusText">未設定</span></div>
+        <div class="mini" style="margin-top:14px;color:#6f7da8;font-weight:700">給料日から次の給料日までの進み具合</div>
+        <div id="cycleAccruedHero" class="heroMoney">¥0</div><div class="mini" style="margin-top:10px;color:#6f7da8;font-weight:700">タップでサマリー</div>
+      </div>
+      <div class="heroBottom">⏱️ 秒給 <span id="perSecHero">¥0.0000</span></div>
+      <div class="heroMeta">
+        <div class="heroBadge">現在の残高: <span id="balanceHero">¥0</span></div>
+        <div class="heroBadge">給料日: 毎月 <span id="paydayHero">-</span> 日</div>
+        <div class="heroBadge">初期残高: <span id="bankStartHero">¥0</span></div>
+      </div>
+    </section>
+
+    <div class="grid" style="margin-top:14px">
+      <section class="card">
+        <div class="sectionHead">
+          <div class="sectionTitle"><span class="sectionIcon">⚙️</span> 基本設定</div>
+          <div class="actions">
+            <button class="primary" id="saveSalarySettings">設定を保存</button>
+            <button class="ghost" id="seedDemo">サンプル追加</button>
+          </div>
+        </div>
+
+        <details class="foldCard" open>
+          <summary>基本設定を開く / 閉じる</summary>
+
+          <div class="inputs three">
+            <div class="field">
+              <label for="salaryInputMode">給与入力方式</label>
+              <select id="salaryInputMode">
+                <option value="monthly">月給から入力</option>
+                <option value="hourly">時給から入力</option>
+              </select>
+            </div>
+            <div class="field salaryModeMonthly">
+              <label for="monthSalary">月給（円）</label>
+              <input id="monthSalary" inputmode="numeric" placeholder="例: 172386">
+            </div>
+            <div class="field salaryModeHourly hidden">
+              <label for="hourlyWage">時給（円）</label>
+              <input id="hourlyWage" inputmode="numeric" placeholder="例: 1200">
+            </div>
+            <div class="field salaryModeHourly hidden">
+              <label for="hourlyCalcMode">時給の逆算方法</label>
+              <select id="hourlyCalcMode">
+                <option value="weekdays">勤務曜日から推定</option>
+                <option value="monthlyDays">月の出勤日数から推定</option>
+              </select>
+            </div>
+            <div class="field salaryModeHourly hidden hourlyCalcMonthlyDays hidden">
+              <label for="monthlyWorkDays">月の出勤日数（不規則シフト用）</label>
+              <input id="monthlyWorkDays" inputmode="numeric" placeholder="例: 12">
+            </div>
+            <div class="field">
+              <label for="payday">給料日（毎月）</label>
+              <select id="payday"></select>
+            </div>
+            <div class="field">
+              <label for="bankStartBalance">初期銀行残高（円）</label>
+              <input id="bankStartBalance" inputmode="numeric" placeholder="例: 30000">
+            </div>
+          </div>
+          <div class="helper" style="margin-top:8px">時給を選ぶと、勤務曜日からの推定か、月の出勤日数からの推定を選べます。</div>
+
+          <div class="inputs two">
+            <div class="field">
+              <label for="workStart">勤務開始</label>
+              <input id="workStart" type="time">
+            </div>
+            <div class="field">
+              <label for="workEnd">勤務終了</label>
+              <input id="workEnd" type="time">
+            </div>
+          </div>
+
+          <div class="inputs two">
+            <div class="field">
+              <label for="breakStart">休憩開始</label>
+              <input id="breakStart" type="time">
+            </div>
+            <div class="field">
+              <label for="breakEnd">休憩終了</label>
+              <input id="breakEnd" type="time">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>勤務曜日</label>
+            <div class="weekdayRow" id="weekdayRow"></div>
+          </div>
+
+          <div class="field">
+            <label>休日設定</label>
+            <label class="checkboxRow">
+              <input id="useJapaneseHolidays" type="checkbox">
+              <span>祝日は休みにする</span>
+            </label>
+            <div class="helper" style="margin-top:8px">休日出勤や平日特別休暇は、カレンダーの日付をタップしてその日だけ上書きできます。</div>
+          </div>
+
+          <div class="salaryPreview">
+            <div class="salaryBadge"><span id="salaryBadgeLabel">月給</span>: <span id="salaryBadgeValue">¥0</span></div>
+            <div class="salaryInfoCard">
+              <div class="salaryInfoRow"><span class="salaryInfoIcon">🧮</span> <span id="previewSalaryMode">給与方式: 未設定</span></div>
+              <div class="salaryInfoRow"><span class="salaryInfoIcon">🕒</span> <span id="previewWorkTime">08:30 - 17:30</span></div>
+              <div class="salaryInfoRow"><span class="salaryInfoIcon">📅</span> <span id="previewWorkDays">月・火・水・木・金</span></div>
+              <div class="salaryInfoRow"><span class="salaryInfoIcon">☕</span> <span id="previewBreak">休憩: 12:00 - 13:00</span></div>
+              <div class="salaryInfoRow"><span class="salaryInfoIcon">💴</span> <span id="previewPayday">給料日: 毎月25日</span></div>
+              <div class="salaryInfoRow"><span class="salaryInfoIcon">🏦</span> <span id="previewBankStart">初期銀行残高: ¥0</span></div>
+              <div class="salaryInfoRow salaryModeHourly hidden" id="previewHourlyRow"><span class="salaryInfoIcon">💵</span> <span id="previewHourlyWage">時給: 未設定</span></div>
+              <div class="salaryInfoRow salaryModeHourly hidden hourlyCalcMonthlyDays hidden" id="previewMonthlyDaysRow"><span class="salaryInfoIcon">🗓️</span> <span id="previewMonthlyDays">月の出勤日数: 未設定</span></div>
+              <div class="salaryBottomRate"><span id="previewSalaryLabel">月給</span>: <span id="previewSalaryAmount">¥0</span> / 秒給: <span id="previewPerSec">¥0</span></div>
+            </div>
+          </div>
+
+          <div class="note">銀行残高は「初期銀行残高 + 給与の積み上がり + 臨時収入 - 支出 - 固定費」で計算します。</div>
+        </details>
+      </section>
+
+      <section class="card">
+        <div class="sectionHead">
+          <div class="sectionTitle"><span class="sectionIcon">🎯</span> 目標設定</div>
+          <div class="actions"><button class="redBtn" id="clearAll">全部初期化</button></div>
+        </div>
+        <div class="inputs two" style="margin-top:14px">
+          <div class="field">
+            <label for="savingGoal">貯金目標（円）</label>
+            <input id="savingGoal" inputmode="numeric" placeholder="例: 500000">
+          </div>
+          <div class="field">
+            <label for="trackingStart">残高計算の基準日時</label>
+            <input id="trackingStart" type="datetime-local">
+          </div>
+        </div>
+        <div class="progress" style="margin-top:14px"><div id="goalBar" class="bar"></div></div>
+        <div class="row" style="margin-top:10px">
+          <div class="mini muted">貯金目標</div>
+          <div id="goalText" class="mini">¥0 / ¥0</div>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <div class="mini muted">目標まで残り</div>
+          <div id="goalRemain" class="mini">¥0</div>
+        </div>
+      </section>
+<section class="card">
+        <h2>支出を追加</h2>
+        <div class="inputs three">
+          <div class="field">
+            <label for="txCategory">カテゴリ</label>
+            <select id="txCategory"></select>
+          </div>
+          <div class="field">
+            <label for="txAmount">金額（円）</label>
+            <input id="txAmount" inputmode="numeric" placeholder="例: 980">
+          </div>
+          <div class="field">
+            <label for="txName">内容</label>
+            <input id="txName" placeholder="例: コンビニ / ゲーム / 服">
+          </div>
+          <div class="field">
+            <label for="txDate">日時</label>
+            <input id="txDate" type="datetime-local">
+          </div>
+          <div class="field">
+            <label for="customCategory">新しいカテゴリ名（必要なら）</label>
+            <input id="customCategory" placeholder="例: プレゼント">
+          </div>
+        </div>
+        <div class="actions" style="margin-top:14px">
+          <button class="greenBtn" id="addTx">支出を追加</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>臨時収入を追加</h2>
+        <div class="inputs three">
+          <div class="field">
+            <label for="bonusAmount">金額（円）</label>
+            <input id="bonusAmount" inputmode="numeric" placeholder="例: 50000">
+          </div>
+          <div class="field">
+            <label for="bonusName">内容</label>
+            <input id="bonusName" placeholder="例: 臨時収入 / 手当 / 振込">
+          </div>
+          <div class="field">
+            <label for="bonusDate">日時</label>
+            <input id="bonusDate" type="datetime-local">
+          </div>
+        </div>
+        <div class="actions" style="margin-top:14px">
+          <button class="greenBtn" id="addBonus">追加する</button>
+        </div>
+        <div class="note">ここから追加した金額は臨時収入として記録されます。</div>
+      </section>
+
+
+      <section class="card">
+        <h2>毎月の固定費</h2>
+        <div class="inputs three">
+          <div class="field">
+            <label for="fixedName">内容</label>
+            <input id="fixedName" placeholder="例: 家賃 / サブスク / 通信費">
+          </div>
+          <div class="field">
+            <label for="fixedCategory">カテゴリ</label>
+            <select id="fixedCategory"></select>
+          </div>
+          <div class="field">
+            <label for="fixedAmount">月額（円）</label>
+            <input id="fixedAmount" inputmode="numeric" placeholder="例: 12000">
+          </div>
+          <div class="field">
+            <label for="fixedDay">毎月の計上日</label>
+            <select id="fixedDay"></select>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:14px">
+          <button class="primary" id="addFixed">固定費を追加</button>
+        </div>
+        <div id="fixedList" class="list" style="margin-top:14px"></div>
+      </section>
+
+      <section class="card">
+        <h2>カテゴリ別</h2>
+        <div class="chipRow" id="summaryRangeChips">
+          <button class="chip active" data-range="month">今月</button>
+          <button class="chip" data-range="all">累計</button>
+        </div>
+        <div id="categorySummary" class="summaryList" style="margin-top:14px"></div>
+      </section>
+
+      <section class="card">
+        <div class="calendarHeader">
+          <div class="calendarTitle" id="calendarTitle">2026年3月</div>
+          <div class="actions">
+            <button class="ghost" id="prevMonth">前の月</button>
+            <button class="ghost" id="todayMonth">今月</button>
+            <button class="ghost" id="nextMonth">次の月</button>
+          </div>
+        </div>
+        <div class="calendarGrid" id="calendarDow"></div>
+        <div class="calendarGrid" id="calendarGrid"></div>
+        <div class="legend">
+          <span class="pill tagExpense">支出</span>
+          <span class="pill tagIncome">収入</span>
+          <span class="pill tagAuto">固定費</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>履歴</h2>
+        <div class="chipRow" id="historyFilterChips">
+          <button class="chip active" data-filter="all">すべて</button>
+          <button class="chip" data-filter="expense">支出のみ</button>
+          <button class="chip" data-filter="income">収入のみ</button>
+          <button class="chip" data-filter="auto">固定費のみ</button>
+        </div>
+        <div id="historyList" class="list" style="margin-top:14px"></div>
+      </section>
+    </div>
+
+
+  
+  <div id="summaryModalBackdrop" class="summaryModalBackdrop">
+    <div class="summaryModal">
+      <div class="modalHeader">
+        <div class="modalTitle">サマリー</div>
+        <button id="summaryModalClose" class="modalClose">×</button>
+      </div>
+      <div class="stats four" style="margin-top:6px">
+        <div class="stat">
+          <div class="k">現在の残高</div>
+          <div id="balanceStat" class="v small">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">今年の給与累計</div>
+          <div id="totalEarnedStat" class="v small green">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">今月の支出</div>
+          <div id="spentThisMonth" class="v small red">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">今日増えた分</div>
+          <div id="earnedToday" class="v small green">¥0</div>
+        </div>
+      </div>
+
+      <div class="calendarHeader" style="margin-top:18px">
+        <div class="calendarTitle" id="annualTitle">年間サマリー 2026年</div>
+        <div class="actions">
+          <button class="ghost" id="prevYear">前年</button>
+          <button class="ghost" id="thisYear">今年</button>
+          <button class="ghost" id="nextYear">翌年</button>
+        </div>
+      </div>
+      <div class="stats four">
+        <div class="stat">
+          <div class="k">年間給与累計</div>
+          <div id="annualSalary" class="v small green">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">年間臨時収入</div>
+          <div id="annualBonus" class="v small green">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">年間支出</div>
+          <div id="annualExpense" class="v small red">¥0</div>
+        </div>
+        <div class="stat">
+          <div class="k">年間収支</div>
+          <div id="annualNet" class="v small">¥0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="dayModalBackdrop" class="modalBackdrop">
+    <div class="modal">
+      <div class="modalHeader">
+        <div id="dayModalTitle" class="modalTitle">日別詳細</div>
+        <button id="dayModalClose" class="modalClose">×</button>
+      </div>
+      <div class="modalBody">
+        <div class="detailTotals">
+          <div class="detailCard">
+            <div class="k">収入</div>
+            <div id="dayModalIncome" class="v green">¥0</div>
+          </div>
+          <div class="detailCard">
+            <div class="k">支出</div>
+            <div id="dayModalExpense" class="v red">¥0</div>
+          </div>
+          <div class="detailCard">
+            <div class="k">収支</div>
+            <div id="dayModalNet" class="v">¥0</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:#fbfcff">
+          <div style="font-weight:900;margin-bottom:8px">この日の勤務上書き</div>
+          <div class="actions">
+            <button class="ghost" id="modalSetOff">この日は休みにする</button>
+            <button class="ghost" id="modalSetWork">この日は出勤日にする</button>
+            <button class="ghost" id="modalClearOverride">上書きを消す</button>
+          </div>
+          <div id="dayModalOverrideState" class="helper" style="margin-top:8px">この日の上書き設定はありません</div>
+        </div>
+        <div id="dayModalList" class="list"></div>
+      </div>
+    </div>
+  </div>
+
+
+    <div class="footerNote">Safariで開いて「ホーム画面に追加」をすると、ホーム画面からすぐ開けます。</div>
+  </div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "salary_meter_v5";
+  const CATEGORY_META = {
+    "食費": { icon:"🍚", color:"#fff4df" }, "日用品": { icon:"🧻", color:"#eef5ff" },
+    "交通": { icon:"🚃", color:"#eef8ff" }, "趣味": { icon:"🎮", color:"#f1ecff" },
+    "美容・服": { icon:"👕", color:"#fff0f6" }, "交際費": { icon:"🤝", color:"#fff6eb" },
+    "サブスク": { icon:"📺", color:"#eef3ff" }, "固定費": { icon:"🏠", color:"#fff7e8" },
+    "医療": { icon:"💊", color:"#eefcf5" }, "その他": { icon:"📝", color:"#f5f7fb" }
+  };
+  const DEFAULT_CATEGORIES = Object.keys(CATEGORY_META);
+  const DOW = ["日","月","火","水","木","金","土"];
+
+  const defaults = {
+    salaryInputMode: "monthly",
+    hourlyCalcMode: "weekdays",
+    monthSalary: "",
+    hourlyWage: "",
+    monthlyWorkDays: "",
+    useJapaneseHolidays: false,
+    payday: "",
+    bankStartBalance: "",
+    savingGoal: "",
+    trackingStart: "",
+    workStart: "",
+    workEnd: "",
+    breakStart: "",
+    breakEnd: "",
+    workDays: [],
+    dayOverrides: [],
+    categories: [...DEFAULT_CATEGORIES], transactions: [], recurringExpenses: []
+  };
+
+  let state = loadState();
+  let summaryRange = "month";
+  let historyFilter = "all";
+  let calendarCursor = new Date();
+  let annualCursorYear = new Date().getFullYear();
+  let calendarDetailMap = new Map();
+  let currentModalDateKey = "";
+
+  const el = id => document.getElementById(id);
+
+  fillSelects();
+  hydrateInputs();
+  renderWeekdayChips();
+  renderCategoryOptions();
+  renderDow();
+  bindEvents();
+  render();
+  setInterval(render, 1000);
+
+  function bindEvents(){
+    el("saveSalarySettings").addEventListener("click", saveSettings);
+    el("salaryInputMode").addEventListener("change", () => { updateSalaryModeUI(); render(); });
+    el("hourlyCalcMode").addEventListener("change", () => { updateSalaryModeUI(); render(); });
+    el("dayModalClose").addEventListener("click", closeDayModal);
+    el("summaryOpenArea").addEventListener("click", openSummaryModal);
+    el("summaryModalClose").addEventListener("click", closeSummaryModal);
+    el("dayModalBackdrop").addEventListener("click", (e) => { if(e.target === el("dayModalBackdrop")) closeDayModal(); });
+    el("summaryModalBackdrop").addEventListener("click", (e) => { if(e.target === el("summaryModalBackdrop")) closeSummaryModal(); });
+    el("modalSetOff").addEventListener("click", () => applyDayOverrideFromModal("off"));
+    el("modalSetWork").addEventListener("click", () => applyDayOverrideFromModal("work"));
+    el("modalClearOverride").addEventListener("click", () => applyDayOverrideFromModal("clear"));
+    el("seedDemo").addEventListener("click", seedDemo);
+    el("clearAll").addEventListener("click", clearAll);
+    el("addTx").addEventListener("click", addTransaction);
+    el("addBonus").addEventListener("click", addBonusIncome);
+    el("addFixed").addEventListener("click", addRecurringExpense);
+    el("prevYear").addEventListener("click", () => { annualCursorYear -= 1; render(); });
+    el("thisYear").addEventListener("click", () => { annualCursorYear = new Date().getFullYear(); render(); });
+    el("nextYear").addEventListener("click", () => { annualCursorYear += 1; render(); });
+
+    document.querySelectorAll("#summaryRangeChips .chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        summaryRange = btn.dataset.range;
+        setActive(btn, "#summaryRangeChips .chip");
+        render();
+      });
+    });
+    document.querySelectorAll("#historyFilterChips .chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        historyFilter = btn.dataset.filter;
+        setActive(btn, "#historyFilterChips .chip");
+        render();
+      });
+    });
+    el("prevMonth").addEventListener("click", () => { calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth()-1, 1); render(); });
+    el("todayMonth").addEventListener("click", () => { calendarCursor = new Date(); render(); });
+    el("nextMonth").addEventListener("click", () => { calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth()+1, 1); render(); });
+  }
+
+  function setActive(active, selector){
+    document.querySelectorAll(selector).forEach(x => x.classList.remove("active"));
+    active.classList.add("active");
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return structuredClone(defaults);
+      const p = JSON.parse(raw);
+      return {
+        ...structuredClone(defaults),
+        ...p,
+        categories: dedupe([...(p.categories||[]), ...DEFAULT_CATEGORIES]),
+        workDays: (p.workDays || []).sort((a,b)=>a-b),
+        dayOverrides: Array.isArray(p.dayOverrides) ? p.dayOverrides : []
+      };
+    }catch{ return structuredClone(defaults); }
+  }
+  function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  function fillSelects(){
+    el("payday").innerHTML = Array.from({length:28}, (_,i) => `<option value="${i+1}">${i+1}日</option>`).join("");
+    el("fixedDay").innerHTML = Array.from({length:28}, (_,i) => `<option value="${i+1}">${i+1}日</option>`).join("");
+  }
+  function hydrateInputs(){
+    el("salaryInputMode").value = state.salaryInputMode || "monthly";
+    el("hourlyCalcMode").value = state.hourlyCalcMode || "weekdays";
+    el("monthSalary").value = state.monthSalary ?? "";
+    el("hourlyWage").value = state.hourlyWage ?? "";
+    el("monthlyWorkDays").value = state.monthlyWorkDays ?? "";
+    el("useJapaneseHolidays").checked = !!state.useJapaneseHolidays;
+    el("payday").value = state.payday ?? "";
+    el("bankStartBalance").value = state.bankStartBalance ?? "";
+    el("savingGoal").value = state.savingGoal ?? "";
+    el("trackingStart").value = state.trackingStart ? normalizeLocalDatetime(state.trackingStart) : "";
+    el("workStart").value = state.workStart ?? "";
+    el("workEnd").value = state.workEnd ?? "";
+    el("breakStart").value = state.breakStart ?? "";
+    el("breakEnd").value = state.breakEnd ?? "";
+    el("txDate").value = nowLocalInputValue();
+    const bonusDateEl = el("bonusDate");
+    if (bonusDateEl) bonusDateEl.value = nowLocalInputValue();
+    updateSalaryModeUI();
+  }
+  function renderWeekdayChips(){
+    const root = el("weekdayRow"); root.innerHTML = "";
+    DOW.forEach((label, day) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "dayChip" + (state.workDays.includes(day) ? " active" : "");
+      b.textContent = label;
+      b.addEventListener("click", () => {
+        if(state.workDays.includes(day)) state.workDays = state.workDays.filter(x => x !== day);
+        else state.workDays = [...state.workDays, day].sort((a,b)=>a-b);
+        saveState(); renderWeekdayChips(); render();
+      });
+      root.appendChild(b);
+    });
+  }
+  function updateSalaryModeUI(){
+    const hourly = (el("salaryInputMode").value || "monthly") === "hourly";
+    const calcMode = el("hourlyCalcMode").value || "weekdays";
+    document.querySelectorAll(".salaryModeMonthly").forEach(node => node.classList.toggle("hidden", hourly));
+    document.querySelectorAll(".salaryModeHourly").forEach(node => node.classList.toggle("hidden", !hourly));
+    document.querySelectorAll(".hourlyCalcMonthlyDays").forEach(node => node.classList.toggle("hidden", !hourly || calcMode !== "monthlyDays"));
+  }
+  function renderCategoryOptions(){
+    const options = state.categories.map(name => {
+      const m = categoryMeta(name);
+      return `<option value="${escapeHtml(name)}">${m.icon} ${escapeHtml(name)}</option>`;
+    }).join("");
+    el("txCategory").innerHTML = options;
+    el("fixedCategory").innerHTML = options;
+  }
+  function renderDow(){
+    el("calendarDow").innerHTML = DOW.map(d => `<div class="dow">${d}</div>`).join("");
+  }
+
+  function saveSettings(){
+    state.salaryInputMode = el("salaryInputMode").value || "monthly";
+    state.hourlyCalcMode = el("hourlyCalcMode").value || "weekdays";
+    state.monthSalary = nullableNumber(el("monthSalary").value);
+    state.hourlyWage = nullableNumber(el("hourlyWage").value);
+    state.monthlyWorkDays = nullableNumber(el("monthlyWorkDays").value);
+    state.useJapaneseHolidays = !!el("useJapaneseHolidays").checked;
+    state.payday = el("payday").value ? parseInt(el("payday").value, 10) : "";
+    state.bankStartBalance = nullableNumber(el("bankStartBalance").value);
+    state.savingGoal = nullableNumber(el("savingGoal").value);
+    state.trackingStart = el("trackingStart").value ? normalizeLocalDatetime(el("trackingStart").value) : "";
+    state.workStart = el("workStart").value || "";
+    state.workEnd = el("workEnd").value || "";
+    state.breakStart = el("breakStart").value || "";
+    state.breakEnd = el("breakEnd").value || "";
+    updateSalaryModeUI();
+    saveState(); render();
+  }
+  function clearAll(){
+    if(!confirm("設定・履歴・固定費をすべて消しますか？")) return;
+    state = structuredClone(defaults); calendarCursor = new Date();
+    hydrateInputs(); renderWeekdayChips(); renderCategoryOptions(); saveState(); render();
+  }
+  function seedDemo(){
+    addCategoryIfNeeded("プレゼント");
+    const now = new Date();
+    state.transactions.unshift({id:uid(), type:"expense", category:"食費", name:"昼ごはん", amount:850, createdAt:new Date(now.getTime()-6*3600*1000).toISOString()});
+    state.transactions.unshift({id:uid(), type:"expense", category:"趣味", name:"ゲーム課金", amount:1500, createdAt:new Date(now.getTime()-30*3600*1000).toISOString()});
+    state.transactions.unshift({id:uid(), type:"income", category:"その他", name:"フリマ売上", amount:2500, createdAt:new Date(now.getTime()-54*3600*1000).toISOString()});
+    state.recurringExpenses.unshift({id:uid(), category:"固定費", name:"サブスク", amount:980, day:12});
+    state.recurringExpenses.unshift({id:uid(), category:"固定費", name:"通信費", amount:5000, day:25});
+    saveState(); renderCategoryOptions(); render();
+  }
+  function addCategoryIfNeeded(name){
+    const clean = String(name || "").trim();
+    if(clean) state.categories = dedupe([clean, ...state.categories]);
+  }
+  function addTransaction(){
+    const custom = String(el("customCategory").value || "").trim();
+    if(custom){
+      addCategoryIfNeeded(custom);
+      renderCategoryOptions();
+      el("txCategory").value = custom;
+      el("fixedCategory").value = custom;
+      el("customCategory").value = "";
+    }
+    const amount = parseNumber(el("txAmount").value, 0);
+    if(!(amount > 0)) return;
+    state.transactions.unshift({
+      id: uid(), type: "expense", category: el("txCategory").value || "その他",
+      name: String(el("txName").value || "").trim() || "支出",
+      amount, createdAt: new Date(el("txDate").value || nowLocalInputValue()).toISOString()
+    });
+    el("txAmount").value = ""; el("txName").value = ""; el("txDate").value = nowLocalInputValue();
+    saveState(); render();
+  }
+  function addBonusIncome(){
+    const amount = parseNumber(el("bonusAmount").value, 0);
+    if(!(amount > 0)) return;
+    state.transactions.unshift({
+      id: uid(),
+      type: "income",
+      category: "臨時収入",
+      name: String(el("bonusName").value || "").trim() || "臨時収入",
+      amount,
+      createdAt: new Date(el("bonusDate").value || nowLocalInputValue()).toISOString()
+    });
+    el("bonusAmount").value = "";
+    el("bonusName").value = "";
+    el("bonusDate").value = nowLocalInputValue();
+    saveState();
+    render();
+  }
+
+  function addRecurringExpense(){
+    const amount = parseNumber(el("fixedAmount").value, 0);
+    const name = String(el("fixedName").value || "").trim();
+    if(!(amount > 0) || !name) return;
+    state.recurringExpenses.unshift({
+      id: uid(), category: el("fixedCategory").value || "固定費", name, amount,
+      day: parseInt(el("fixedDay").value, 10) || 1
+    });
+    el("fixedName").value = ""; el("fixedAmount").value = "";
+    saveState(); render();
+  }
+
+
+  function getWorkSecondsPerDay(cfg){
+    const ws = timeToMinutes(cfg.workStart);
+    const we = timeToMinutes(cfg.workEnd);
+    const bs = timeToMinutes(cfg.breakStart);
+    const be = timeToMinutes(cfg.breakEnd);
+    if(we <= ws) return 0;
+    let totalMinutes = we - ws;
+    const breakOverlap = Math.max(0, Math.min(we, be) - Math.max(ws, bs));
+    totalMinutes -= breakOverlap;
+    return Math.max(0, totalMinutes * 60);
+  }
+
+  function countWorkingDaysInCycle(cycleStart, cycleEnd, cfg){
+    let count = 0;
+    let d = dayStart(cycleStart);
+    const last = dayStart(new Date(cycleEnd.getTime() - 1));
+    while(d <= last){
+      if(Array.isArray(cfg.workDays) && cfg.workDays.includes(d.getDay())) count += 1;
+      d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0, 0);
+    }
+    return count;
+  }
+
+  function resolveHourlyDerivedMonthSalary(cycleStart, cycleEnd, cfg){
+    const hourlyWage = Number(cfg.hourlyWage || 0);
+    if(!(hourlyWage > 0)) return 0;
+    const calcMode = cfg.hourlyCalcMode || "weekdays";
+    if(calcMode === "monthlyDays"){
+      const perDaySeconds = getWorkSecondsPerDay(cfg);
+      const monthlyWorkDays = Number(cfg.monthlyWorkDays || 0);
+      return Math.round(hourlyWage * (perDaySeconds / 3600) * monthlyWorkDays);
+    }
+    const cycleTotalWorkSeconds = workingSecondsBetween(cycleStart, cycleEnd, cfg);
+    return Math.round(hourlyWage * (cycleTotalWorkSeconds / 3600));
+  }
+
+  function resolveCycleSalaryAndRate(cycleStart, cycleEnd, now, cfg){
+    const salaryInputMode = cfg.salaryInputMode || "monthly";
+    const hourlyWage = Number(cfg.hourlyWage || 0);
+    const calcMode = cfg.hourlyCalcMode || "weekdays";
+    let cycleTotalWorkSeconds = workingSecondsBetween(cycleStart, cycleEnd, cfg);
+    let cycleElapsedWorkSeconds = workingSecondsBetween(cycleStart, now, cfg);
+    let monthSalary = 0;
+    let perSec = 0;
+    if(salaryInputMode === "hourly"){
+      monthSalary = resolveHourlyDerivedMonthSalary(cycleStart, cycleEnd, cfg);
+      if(calcMode === "monthlyDays"){
+        const cycleDurationSeconds = Math.max(1, (cycleEnd - cycleStart) / 1000);
+        const elapsedSeconds = Math.max(0, (now - cycleStart) / 1000);
+        cycleTotalWorkSeconds = cycleDurationSeconds;
+        cycleElapsedWorkSeconds = Math.min(cycleDurationSeconds, elapsedSeconds);
+        perSec = monthSalary > 0 ? monthSalary / cycleDurationSeconds : 0;
+      } else {
+        perSec = hourlyWage > 0 ? hourlyWage / 3600 : 0;
+      }
+    } else {
+      monthSalary = Number(cfg.monthSalary || 0);
+      perSec = cycleTotalWorkSeconds > 0 ? monthSalary / cycleTotalWorkSeconds : 0;
+    }
+    return { monthSalary, perSec, cycleTotalWorkSeconds, cycleElapsedWorkSeconds };
+  }
+
+  function render(){
+    const now = new Date();
+    const trackingStart = state.trackingStart ? finiteDate(new Date(state.trackingStart), new Date()) : null;
+    const paydayForCalc = state.payday || 25;
+    const cycleStart = getCycleStart(now, paydayForCalc);
+    const cycleEnd = getCycleEnd(cycleStart, paydayForCalc);
+
+    const salaryInputMode = state.salaryInputMode || "monthly";
+    const hourlyCalcMode = state.hourlyCalcMode || "weekdays";
+    const hourlyWage = Number(state.hourlyWage || 0);
+    const { monthSalary, perSec, cycleTotalWorkSeconds, cycleElapsedWorkSeconds } = resolveCycleSalaryAndRate(cycleStart, cycleEnd, now, state);
+    const bankStartBalance = Number(state.bankStartBalance || 0);
+    const savingGoal = Number(state.savingGoal || 0);
+
+    const cycleAccrued = perSec * cycleElapsedWorkSeconds;
+
+    const totalEarned = trackingStart ? accruedSalaryBetween(trackingStart, now, state) : 0;
+    const earnedToday = trackingStart ? accruedSalaryBetween(dayStart(now), now, state) : 0;
+
+    const recurringBaseStart = trackingStart || new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const autoEntriesAll = buildRecurringEntries(state.recurringExpenses, recurringBaseStart, now);
+    const manualEntries = [...state.transactions];
+    const allEntries = sortEntries([...manualEntries, ...autoEntriesAll]);
+
+    const manualExpenseTotal = sumAmount(manualEntries.filter(x => x.type === "expense"));
+    const autoExpenseTotal = sumAmount(autoEntriesAll);
+    const manualIncomeTotal = sumAmount(manualEntries.filter(x => x.type === "income"));
+    const bankBalance = bankStartBalance + totalEarned + manualIncomeTotal - manualExpenseTotal - autoExpenseTotal;
+
+    const monthEntriesManual = manualEntries.filter(x => isSameMonth(new Date(x.createdAt), now));
+    const monthEntriesAuto = autoEntriesAll.filter(x => isSameMonth(new Date(x.createdAt), now));
+    const spentThisMonth = sumAmount(monthEntriesManual.filter(x => x.type === "expense")) + sumAmount(monthEntriesAuto);
+
+    const currentYearSalary = resolveCurrentYearSalaryForSummary(now, state);
+
+    const yearStart = new Date(annualCursorYear, 0, 1, 0, 0, 0, 0);
+    const yearEnd = new Date(annualCursorYear + 1, 0, 1, 0, 0, 0, 0);
+    const annualSalaryEnd = new Date(Math.min(now.getTime(), yearEnd.getTime()));
+    let annualSalary = annualSalaryEnd > yearStart ? accruedSalaryBetween(yearStart, annualSalaryEnd, state) : 0;
+    if(annualCursorYear === now.getFullYear()){
+      annualSalary = currentYearSalary;
+    }
+    const annualManual = manualEntries.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
+    const annualAuto = autoEntriesAll.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
+    const annualExtraIncome = sumAmount(annualManual.filter(x => x.type === "income"));
+    const annualExpense = sumAmount(annualManual.filter(x => x.type === "expense")) + sumAmount(annualAuto);
+    const annualNet = annualSalary + annualExtraIncome - annualExpense;
+
+    const configured = monthSalary > 0 && state.payday !== "" && state.workStart && state.workEnd && (
+      ((state.hourlyCalcMode || "weekdays") === "monthlyDays" && Number(state.monthlyWorkDays || 0) > 0) ||
+      (Array.isArray(state.workDays) && state.workDays.length > 0)
+    );
+    const active = configured && isWithinWorkSegments(now, state);
+    el("statusPill").className = "statusPill" + (active ? "" : " idle");
+    el("statusText").textContent = !configured ? "未設定" : active ? "稼働中" : "待機中";
+    el("cycleAccruedHero").textContent = yen(cycleAccrued);
+    el("perSecHero").textContent = yenRate(perSec);
+    el("balanceHero").textContent = yen(bankBalance);
+    el("paydayHero").textContent = state.payday ? String(state.payday) : "-";
+    el("bankStartHero").textContent = state.bankStartBalance === "" ? "未設定" : yen(bankStartBalance);
+
+    el("salaryBadgeLabel").textContent = salaryInputMode === "hourly" ? "推定月給" : "月給";
+    el("salaryBadgeValue").textContent = salaryInputMode === "hourly"
+      ? (hourlyWage > 0 ? yen(monthSalary) : "未設定")
+      : (state.monthSalary === "" ? "未設定" : yen(monthSalary));
+    el("previewSalaryLabel").textContent = salaryInputMode === "hourly" ? "推定月給" : "月給";
+    el("previewSalaryAmount").textContent = salaryInputMode === "hourly"
+      ? (hourlyWage > 0 ? yen(monthSalary) : "未設定")
+      : (state.monthSalary === "" ? "未設定" : yen(monthSalary));
+    el("previewSalaryMode").textContent = salaryInputMode === "hourly"
+      ? `給与方式: 時給から自動計算（${hourlyCalcMode === "monthlyDays" ? "月の出勤日数" : "勤務曜日"}）`
+      : "給与方式: 月給を直接入力";
+    el("previewHourlyRow").classList.toggle("hidden", salaryInputMode !== "hourly");
+    el("previewMonthlyDaysRow").classList.toggle("hidden", salaryInputMode !== "hourly" || hourlyCalcMode !== "monthlyDays");
+    el("previewHourlyWage").textContent = state.hourlyWage === "" ? "時給: 未設定" : `時給: ${yen(Number(state.hourlyWage || 0))}`;
+    el("previewMonthlyDays").textContent = state.monthlyWorkDays === "" ? "月の出勤日数: 未設定" : `月の出勤日数: ${Number(state.monthlyWorkDays)}日`;
+    el("previewWorkTime").textContent = state.workStart && state.workEnd ? `${state.workStart} - ${state.workEnd}` : "未設定";
+    el("previewWorkDays").textContent = hourlyCalcMode === "monthlyDays"
+      ? (state.monthlyWorkDays === "" ? "出勤日数未設定" : `月の出勤日数: ${Number(state.monthlyWorkDays)}日`)
+      : formatWorkDays(state.workDays) + (state.useJapaneseHolidays ? " / 祝日休み" : "");
+    el("previewBreak").textContent = state.breakStart && state.breakEnd ? `休憩: ${state.breakStart} - ${state.breakEnd}` : "休憩: 未設定";
+    el("previewPayday").textContent = state.payday ? `給料日: 毎月${state.payday}日` : "給料日: 未設定";
+    el("previewBankStart").textContent = state.bankStartBalance === "" ? "初期残高: 未設定" : `初期残高: ${yen(bankStartBalance)}`;
+    el("previewPerSec").textContent = yenRate(perSec);
+
+    const progress = savingGoal > 0 ? clamp(bankBalance / savingGoal, 0, 1) : 0;
+    el("goalBar").style.width = `${(progress*100).toFixed(1)}%`;
+    el("goalText").textContent = `${yen(Math.max(0, bankBalance))} / ${savingGoal > 0 ? yen(savingGoal) : "未設定"}`;
+    el("goalRemain").textContent = savingGoal > 0 ? yen(Math.max(0, savingGoal - Math.max(0, bankBalance))) : "未設定";
+
+    el("balanceStat").textContent = yen(bankBalance);
+    el("balanceStat").className = "v small " + (bankBalance < 0 ? "red" : "");
+    el("totalEarnedStat").textContent = yen(currentYearSalary);
+    el("spentThisMonth").textContent = yen(spentThisMonth);
+    el("earnedToday").textContent = yen(earnedToday);
+
+    el("annualTitle").textContent = `年間サマリー ${annualCursorYear}年`;
+    el("annualSalary").textContent = yen(annualSalary);
+    el("annualBonus").textContent = yen(annualExtraIncome);
+    el("annualExpense").textContent = yen(annualExpense);
+    el("annualNet").textContent = yen(annualNet);
+    el("annualNet").className = "v small " + (annualNet < 0 ? "red" : "green");
+
+    renderFixedList();
+    renderCategorySummary(allEntries, now);
+    renderCalendar(allEntries, calendarCursor);
+    renderHistory(allEntries);
+  }
+
+  function formatWorkDays(days){ return Array.isArray(days) && days.length ? days.slice().sort((a,b)=>a-b).map(d => DOW[d]).join("・") : "未設定"; }
+  function getCycleStart(date, payday){
+    const y = date.getFullYear(), m = date.getMonth();
+    const thisPayday = new Date(y, m, Math.min(payday || 25, lastDayOfMonth(y,m)), 0, 0, 0, 0);
+    if(date >= thisPayday) return thisPayday;
+    const py = m === 0 ? y - 1 : y, pm = m === 0 ? 11 : m - 1;
+    return new Date(py, pm, Math.min(payday || 25, lastDayOfMonth(py,pm)), 0, 0, 0, 0);
+  }
+  function getCycleEnd(cycleStart, payday){
+    const y = cycleStart.getFullYear(), m = cycleStart.getMonth();
+    const ny = m === 11 ? y + 1 : y, nm = (m + 1) % 12;
+    return new Date(ny, nm, Math.min(payday || 25, lastDayOfMonth(ny,nm)), 0, 0, 0, 0);
+  }
+  function timeToMinutes(v){
+    const [h,m] = String(v || "0:0").split(":").map(Number);
+    return (h || 0) * 60 + (m || 0);
+  }
+
+function dateKeyLocal(dateLike){
+  const d = new Date(dateLike);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function nthWeekdayOfMonth(year, month, weekday, nth){
+  const first = new Date(year, month, 1);
+  const offset = (7 + weekday - first.getDay()) % 7;
+  return 1 + offset + (nth - 1) * 7;
+}
+
+function vernalEquinoxDay(year){
+  return Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+}
+
+function autumnEquinoxDay(year){
+  return Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+}
+
+function japanBaseHolidayName(year, month, day){
+  const m = month + 1;
+  if(m === 1 && day === 1) return "元日";
+  if(m === 1 && day === nthWeekdayOfMonth(year, month, 1, 2)) return "成人の日";
+  if(m === 2 && day === 11) return "建国記念の日";
+  if(m === 2 && day === 23) return "天皇誕生日";
+  if(m === 3 && day === vernalEquinoxDay(year)) return "春分の日";
+  if(m === 4 && day === 29) return "昭和の日";
+  if(m === 5 && day === 3) return "憲法記念日";
+  if(m === 5 && day === 4) return "みどりの日";
+  if(m === 5 && day === 5) return "こどもの日";
+  if(m === 7 && day === nthWeekdayOfMonth(year, month, 1, 3)) return "海の日";
+  if(m === 8 && day === 11) return "山の日";
+  if(m === 9 && day === nthWeekdayOfMonth(year, month, 1, 3)) return "敬老の日";
+  if(m === 9 && day === autumnEquinoxDay(year)) return "秋分の日";
+  if(m === 10 && day === nthWeekdayOfMonth(year, month, 1, 2)) return "スポーツの日";
+  if(m === 11 && day === 3) return "文化の日";
+  if(m === 11 && day === 23) return "勤労感謝の日";
+  return "";
+}
+
+function isJapanHoliday(date){
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  if(japanBaseHolidayName(year, month, day)) return true;
+
+  const prev = new Date(year, month, day - 1);
+  if(date.getDay() === 1 && japanBaseHolidayName(prev.getFullYear(), prev.getMonth(), prev.getDate())) return true;
+
+  const prev2 = new Date(year, month, day - 1);
+  const next2 = new Date(year, month, day + 1);
+  if(date.getDay() !== 0 && date.getDay() !== 6 &&
+     japanBaseHolidayName(prev2.getFullYear(), prev2.getMonth(), prev2.getDate()) &&
+     japanBaseHolidayName(next2.getFullYear(), next2.getMonth(), next2.getDate())) return true;
+
+  return false;
+}
+
+function getDayOverride(date, cfg){
+  const key = dateKeyLocal(date);
+  const found = (cfg.dayOverrides || []).find(x => x.date === key);
+  return found ? found.type : "";
+}
+  function getDailySegments(date, cfg){
+    const override = getDayOverride(date, cfg);
+    const baseWorkday = Array.isArray(cfg.workDays) && cfg.workDays.includes(date.getDay());
+    if(override === "off") return [];
+    if(override !== "work"){
+      if(cfg.useJapaneseHolidays && isJapanHoliday(date)) return [];
+      if(!baseWorkday) return [];
+    }
+    const ws = timeToMinutes(cfg.workStart), we = timeToMinutes(cfg.workEnd);
+    const bs = timeToMinutes(cfg.breakStart), be = timeToMinutes(cfg.breakEnd);
+    if(we <= ws) return [];
+    const segs = [];
+    const s1s = ws, s1e = Math.min(we, Math.max(ws, bs));
+    const s2s = Math.max(ws, Math.min(we, be)), s2e = we;
+    if(s1e > s1s) segs.push([mkDate(date,s1s), mkDate(date,s1e)]);
+    if(s2e > s2s) segs.push([mkDate(date,s2s), mkDate(date,s2e)]);
+    return segs;
+  }
+  function mkDate(base, minutes){ return new Date(base.getFullYear(), base.getMonth(), base.getDate(), Math.floor(minutes/60), minutes%60, 0, 0); }
+  function isWithinWorkSegments(date, cfg){ return getDailySegments(date, cfg).some(([s,e]) => date >= s && date < e); }
+  function workingSecondsBetween(start, end, cfg){
+    if(!(end > start)) return 0;
+    let total = 0, d = dayStart(start), last = dayStart(end);
+    while(d <= last){
+      getDailySegments(d, cfg).forEach(([s,e]) => {
+        const from = new Date(Math.max(s.getTime(), start.getTime()));
+        const to = new Date(Math.min(e.getTime(), end.getTime()));
+        if(to > from) total += (to - from) / 1000;
+      });
+      d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0, 0);
+    }
+    return total;
+  }
+
+  function paydayDate(year, monthIndex, payday){
+    return new Date(year, monthIndex, Math.min(payday || 25, lastDayOfMonth(year, monthIndex)), 0, 0, 0, 0);
+  }
+
+  function resolveCurrentYearSalaryForSummary(now, cfg){
+    if((cfg.salaryInputMode || "monthly") !== "monthly"){
+      const currentYearStart = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+      return accruedSalaryBetween(currentYearStart, now, cfg);
+    }
+
+    const monthSalary = Number(cfg.monthSalary || 0);
+    if(!(monthSalary > 0)) return 0;
+
+    const year = now.getFullYear();
+    const payday = cfg.payday || 25;
+    let completedMonths = 0;
+    let lastBoundary = new Date(year, 0, 1, 0, 0, 0, 0);
+    let nextBoundary = paydayDate(year, 0, payday);
+
+    for(let m=0; m<12; m++){
+      const pd = paydayDate(year, m, payday);
+      if(pd <= now){
+        completedMonths += 1;
+        lastBoundary = pd;
+      } else {
+        nextBoundary = pd;
+        break;
+      }
+      if(m === 11){
+        nextBoundary = paydayDate(year + 1, 0, payday);
+      }
+    }
+
+    const cycleSeconds = Math.max(1, (nextBoundary - lastBoundary) / 1000);
+    const elapsedSeconds = Math.max(0, (now - lastBoundary) / 1000);
+    const fraction = Math.min(1, elapsedSeconds / cycleSeconds);
+
+    return completedMonths * monthSalary + monthSalary * fraction;
+  }
+
+  function resolveCycleSalary(cStart, cEnd, cfg){
+    if((cfg.salaryInputMode || "monthly") === "hourly"){
+      if((cfg.hourlyCalcMode || "weekdays") === "monthlyDays"){
+        return resolveHourlyDerivedMonthSalary(cStart, cEnd, cfg);
+      }
+      return Number(cfg.hourlyWage || 0) * workingSecondsBetween(cStart, cEnd, cfg) / 3600;
+    }
+    return Number(cfg.monthSalary || 0);
+  }
+  function accruedSalaryBetween(start, end, cfg){
+    if(!(end > start)) return 0;
+    let total = 0, cursor = new Date(start);
+    while(cursor < end){
+      const cStart = getCycleStart(cursor, cfg.payday);
+      const cEnd = getCycleEnd(cStart, cfg.payday);
+      const segEnd = new Date(Math.min(cEnd.getTime(), end.getTime()));
+      const totalWork = workingSecondsBetween(cStart, cEnd, cfg);
+      const worked = workingSecondsBetween(cursor, segEnd, cfg);
+      const cycleSalary = resolveCycleSalary(cStart, cEnd, cfg);
+      if(totalWork > 0) total += cycleSalary * (worked / totalWork);
+      cursor = segEnd.getTime() === cEnd.getTime() ? new Date(cEnd.getTime() + 1) : segEnd;
+    }
+    return total;
+  }
+
+  function renderFixedList(){
+    if(!state.recurringExpenses.length){ el("fixedList").innerHTML = `<div class="empty">固定費はまだありません</div>`; return; }
+    el("fixedList").innerHTML = "";
+    state.recurringExpenses.forEach(item => {
+      const m = categoryMeta(item.category);
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `
+        <div class="iconLine">
+          <span class="iconBubble" style="background:${m.color}">${m.icon}</span>
+          <div class="meta">
+            <div class="name">${escapeHtml(item.name)}</div>
+            <div class="pill">${escapeHtml(item.category)} / 毎月${item.day}日</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="amount red">-${yen(item.amount)}</div>
+          <button class="ghost">削除</button>
+        </div>`;
+      div.querySelector("button").addEventListener("click", () => {
+        state.recurringExpenses = state.recurringExpenses.filter(x => x.id !== item.id);
+        saveState(); render();
+      });
+      el("fixedList").appendChild(div);
+    });
+  }
+  function renderCategorySummary(allEntries, now){
+    let entries = allEntries.filter(e => e.kind !== "income");
+    if(summaryRange === "month") entries = entries.filter(e => isSameMonth(new Date(e.createdAt), now));
+    const map = new Map();
+    entries.forEach(e => map.set(e.category || "その他", (map.get(e.category || "その他") || 0) + e.amount));
+    const rows = [...map.entries()].sort((a,b)=>b[1]-a[1]);
+    if(!rows.length){ el("categorySummary").innerHTML = `<div class="empty">まだカテゴリ別データがありません</div>`; return; }
+    const max = rows[0][1] || 1;
+    el("categorySummary").innerHTML = rows.map(([name, amount]) => {
+      const m = categoryMeta(name);
+      return `<div class="summaryItem">
+        <div class="row">
+          <div class="iconLine"><span class="iconBubble" style="background:${m.color}">${m.icon}</span><div class="name">${escapeHtml(name)}</div></div>
+          <div class="amount red">-${yen(amount)}</div>
+        </div>
+        <div class="barLine"><div class="barFill" style="width:${(amount/max*100).toFixed(1)}%"></div></div>
+      </div>`;
+    }).join("");
+  }
+  function renderCalendar(allEntries, cursor){
+    const y = cursor.getFullYear(), m = cursor.getMonth();
+    el("calendarTitle").textContent = `${y}年${m+1}月`;
+    const first = new Date(y,m,1), last = new Date(y,m+1,0), startOffset = first.getDay(), totalDays = last.getDate(), prevLast = new Date(y,m,0).getDate();
+    const dayMap = new Map();
+    calendarDetailMap = new Map();
+    allEntries.forEach(item => {
+      const d = new Date(item.createdAt);
+      if(d.getFullYear() === y && d.getMonth() === m){
+        const day = d.getDate();
+        if(!dayMap.has(day)) dayMap.set(day, []);
+        dayMap.get(day).push(item);
+      }
+    });
+    const cells = [];
+    for(let i=0;i<42;i++){
+      const dateNum = i - startOffset + 1;
+      let cellDate, muted = false;
+      if(dateNum < 1){ cellDate = new Date(y,m-1,prevLast + dateNum); muted = true; }
+      else if(dateNum > totalDays){ cellDate = new Date(y,m+1,dateNum-totalDays); muted = true; }
+      else cellDate = new Date(y,m,dateNum);
+      const isCurrent = !muted;
+      const entries = isCurrent ? (dayMap.get(dateNum) || []).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)) : [];
+      const expense = sumAmount(entries.filter(e => e.kind !== "income"));
+      const income = sumAmount(entries.filter(e => e.kind === "income"));
+      const today = isSameDay(cellDate, new Date());
+      const holiday = isCurrent && isJapanHoliday(cellDate);
+      const dateKey = `${cellDate.getFullYear()}-${pad(cellDate.getMonth()+1)}-${pad(cellDate.getDate())}`;
+      if(isCurrent) calendarDetailMap.set(dateKey, entries);
+      const preview = entries.slice(0,2).map(e => {
+        const m = categoryMeta(e.category), kind = e.kind === "income" ? "income" : e.kind === "auto" ? "auto" : "expense", sign = e.kind === "income" ? "+" : "-";
+        return `<div class="dayEntry ${kind}">${m.icon} ${escapeHtml(e.name)} ${sign}${yen(e.amount)}</div>`;
+      }).join("");
+      cells.push(`<div class="day ${muted ? "mutedCell" : ""} ${today ? "today" : ""} ${holiday ? "holiday" : ""}" ${isCurrent ? `data-date="${dateKey}"` : ""}>
+        <div class="dayNum ${holiday ? "holiday" : ""}">${cellDate.getDate()} ${holiday ? '<span class="holidayBadge">祝</span>' : ''}</div>
+        ${isCurrent && income ? `<div class="daySummary inc">+${yen(income)}</div>` : ""}
+        ${isCurrent && expense ? `<div class="daySummary exp">-${yen(expense)}</div>` : ""}
+        <div class="dayEntries">${preview}</div>
+      </div>`);
+    }
+    el("calendarGrid").innerHTML = cells.join("");
+    el("calendarGrid").querySelectorAll(".day[data-date]").forEach(dayEl => {
+      dayEl.addEventListener("click", () => openDayModal(dayEl.dataset.date));
+    });
+  }
+  function renderHistory(allEntries){
+    let entries = allEntries;
+    if(historyFilter !== "all") entries = entries.filter(e => e.kind === historyFilter);
+    entries = entries.slice(0, 60);
+    if(!entries.length){ el("historyList").innerHTML = `<div class="empty">履歴はまだありません</div>`; return; }
+    el("historyList").innerHTML = "";
+    entries.forEach(item => {
+      const m = categoryMeta(item.category);
+      const div = document.createElement("div");
+      div.className = "item";
+      const tagClass = item.kind === "income" ? "tagIncome" : item.kind === "auto" ? "tagAuto" : "tagExpense";
+      const sign = item.kind === "income" ? "+" : "-";
+      const amountClass = item.kind === "income" ? "green" : "red";
+      div.innerHTML = `
+        <div class="iconLine">
+          <span class="iconBubble" style="background:${m.color}">${m.icon}</span>
+          <div class="meta">
+            <div class="name">${escapeHtml(item.name)}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="pill ${tagClass}">${item.kind === "income" ? "収入" : item.kind === "auto" ? "固定費" : "支出"}</span>
+              <span class="pill">${escapeHtml(item.category || "その他")}</span>
+              <span class="pill">${formatDateTimeShort(new Date(item.createdAt))}</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="amount ${amountClass}">${sign}${yen(item.amount)}</div>
+          ${item.kind === "auto" ? "" : '<button class="ghost">削除</button>'}
+        </div>`;
+      const btn = div.querySelector("button");
+      if(btn){
+        btn.addEventListener("click", () => {
+          state.transactions = state.transactions.filter(x => x.id !== item.id);
+          saveState(); render();
+        });
+      }
+      el("historyList").appendChild(div);
+    });
+  }
+
+
+
+function openSummaryModal(){
+    el("summaryModalBackdrop").classList.add("open");
+  }
+
+  function closeSummaryModal(){
+    el("summaryModalBackdrop").classList.remove("open");
+  }
+
+  function applyDayOverrideFromModal(mode){
+  if(!currentModalDateKey) return;
+  if(mode === "clear"){
+    state.dayOverrides = (state.dayOverrides || []).filter(x => x.date !== currentModalDateKey);
+  } else {
+    state.dayOverrides = (state.dayOverrides || []).filter(x => x.date !== currentModalDateKey);
+    state.dayOverrides.push({ date: currentModalDateKey, type: mode });
+  }
+  saveState();
+  render();
+  openDayModal(currentModalDateKey);
+}
+
+function getOverrideStateText(dateKey){
+  const found = (state.dayOverrides || []).find(x => x.date === dateKey);
+  if(found) return found.type === "off" ? "この日は休みに設定されています" : "この日は出勤日に設定されています";
+  if(state.useJapaneseHolidays){
+    const d = new Date(dateKey + "T00:00:00");
+    if(isJapanHoliday(d)) return "この日は祝日休みとして扱われます";
+  }
+  return "この日の上書き設定はありません";
+}
+  function openDayModal(dateKey){
+    const entries = (calendarDetailMap.get(dateKey) || []).slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    const dateObj = new Date(`${dateKey}T00:00:00`);
+    el("dayModalTitle").textContent = `${dateObj.getFullYear()}年${dateObj.getMonth()+1}月${dateObj.getDate()}日 の収支`;
+    const income = sumAmount(entries.filter(e => e.kind === "income"));
+    const expense = sumAmount(entries.filter(e => e.kind !== "income"));
+    const net = income - expense;
+    el("dayModalIncome").textContent = yen(income);
+    el("dayModalExpense").textContent = yen(expense);
+    el("dayModalNet").textContent = yen(net);
+    el("dayModalNet").className = `v ${net < 0 ? "red" : "green"}`;
+    if(!entries.length){
+      el("dayModalList").innerHTML = `<div class="empty">この日の入力はまだありません</div>`;
+    } else {
+      el("dayModalList").innerHTML = "";
+      entries.forEach(item => {
+        const m = categoryMeta(item.category);
+        const tagClass = item.kind === "income" ? "tagIncome" : item.kind === "auto" ? "tagAuto" : "tagExpense";
+        const sign = item.kind === "income" ? "+" : "-";
+        const amountClass = item.kind === "income" ? "green" : "red";
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div class="iconLine">
+            <span class="iconBubble" style="background:${m.color}">${m.icon}</span>
+            <div class="meta">
+              <div class="name">${escapeHtml(item.name)}</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <span class="pill ${tagClass}">${item.kind === "income" ? "収入" : item.kind === "auto" ? "固定費" : "支出"}</span>
+                <span class="pill">${escapeHtml(item.category || "その他")}</span>
+                <span class="pill">${formatDateTimeShort(new Date(item.createdAt))}</span>
+              </div>
+            </div>
+          </div>
+          <div class="amount ${amountClass}">${sign}${yen(item.amount)}</div>`;
+        el("dayModalList").appendChild(div);
+      });
+    }
+    el("dayModalBackdrop").classList.add("open");
+  }
+
+  function closeDayModal(){
+    el("dayModalBackdrop").classList.remove("open");
+  }
+
+  function buildRecurringEntries(recurring, start, now){
+    const out = [];
+    recurring.forEach(item => {
+      iterateMonthPoints(start, now, (y,m) => {
+        const day = Math.min(item.day, lastDayOfMonth(y,m));
+        const date = new Date(y,m,day,0,0,0,0);
+        if(date >= start && date <= now){
+          out.push({ id:`${item.id}_${y}_${m}_${day}`, kind:"auto", type:"expense", category:item.category, name:item.name, amount:item.amount, createdAt:date.toISOString() });
+        }
+      });
+    });
+    return out;
+  }
+  function iterateMonthPoints(start, end, cb){
+    let y = start.getFullYear(), m = start.getMonth();
+    const ey = end.getFullYear(), em = end.getMonth();
+    while(y < ey || (y === ey && m <= em)){ cb(y,m); m++; if(m > 11){ m = 0; y++; } }
+  }
+
+  function categoryMeta(name){ return CATEGORY_META[name] || { icon:"📝", color:"#f5f7fb" }; }
+  function sumAmount(arr){ return arr.reduce((s,x)=>s + (Number(x.amount) || 0), 0); }
+  function sortEntries(arr){ return arr.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)); }
+  function dedupe(arr){ return [...new Set(arr.filter(Boolean).map(x=>String(x).trim()).filter(Boolean))]; }
+  function clamp(v,min,max){ return Math.min(max, Math.max(min, v)); }
+  function dayStart(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0); }
+  function lastDayOfMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+  function isSameMonth(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth(); }
+  function isSameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+  function finiteDate(d, fallback){ return d instanceof Date && !Number.isNaN(d.getTime()) ? d : fallback; }
+  function parseNumber(value, fallback=0){ const n = Number(String(value ?? "").replace(/[^\d.-]/g, "")); return Number.isFinite(n) ? n : fallback; }
+  function nullableNumber(value){
+    const cleaned = String(value ?? "").replace(/[^\d.-]/g, "");
+    if(cleaned === "") return "";
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : "";
+  }
+  function normalizeLocalDatetime(value){ const d = finiteDate(new Date(value), new Date()); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+  function nowLocalInputValue(){ return normalizeLocalDatetime(new Date()); }
+  function pad(n){ return String(n).padStart(2,"0"); }
+  function uid(){ return crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()); }
+  function yen(value){ return new Intl.NumberFormat("ja-JP",{style:"currency",currency:"JPY",maximumFractionDigits:0}).format(Math.round(value || 0)); }
+  function yenRate(value){ return `¥${Number(value || 0).toFixed(4)}`; }
+  function formatDateTimeShort(d){ return new Intl.DateTimeFormat("ja-JP",{year:"2-digit",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}).format(d); }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, ch => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[ch])); }
+})();
+</script>
+</body>
+</html>
