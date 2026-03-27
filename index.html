@@ -1390,6 +1390,7 @@ function getOverrideStateText(dateKey){
   return "この日の上書き設定はありません";
 }
   function openDayModal(dateKey){
+    currentModalDateKey = dateKey;
     const entries = (calendarDetailMap.get(dateKey) || []).slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
     const dateObj = new Date(`${dateKey}T00:00:00`);
     el("dayModalTitle").textContent = `${dateObj.getFullYear()}年${dateObj.getMonth()+1}月${dateObj.getDate()}日 の収支`;
@@ -1400,6 +1401,7 @@ function getOverrideStateText(dateKey){
     el("dayModalExpense").textContent = yen(expense);
     el("dayModalNet").textContent = yen(net);
     el("dayModalNet").className = `v ${net < 0 ? "red" : "green"}`;
+    el("dayModalOverrideState").textContent = getOverrideStateText(dateKey);
     if(!entries.length){
       el("dayModalList").innerHTML = `<div class="empty">この日の入力はまだありません</div>`;
     } else {
