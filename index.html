@@ -145,7 +145,17 @@
       display:inline-block;padding:2px 6px;border-radius:999px;font-size:10px;font-weight:900;
       background:#ffe5ea;color:#d94b63;border:1px solid #ffd0d8
     }
+    .overrideBadge{
+      display:inline-block;padding:2px 6px;border-radius:999px;font-size:10px;font-weight:900;
+      border:1px solid transparent
+    }
+    .overrideBadge.off{background:#eef0ff;color:#5b67d8;border-color:#d8ddff}
+    .overrideBadge.work{background:#e9fbf2;color:#14955b;border-color:#ccefdc}
+    .day.overrideOff{background:#f4f5ff;border-color:#d8ddff;box-shadow:inset 0 0 0 1px #eaedff}
+    .day.overrideWork{background:#eefbf4;border-color:#ccefdc;box-shadow:inset 0 0 0 1px #dff6e9}
     .dayNum{font-size:12px;font-weight:900}
+    .dayNum.overrideOff{color:#5b67d8}
+    .dayNum.overrideWork{color:#14955b}
     .daySummary{font-size:11px;font-weight:900}
     .daySummary.exp{color:var(--red)} .daySummary.inc{color:var(--green)}
     .dayEntries{display:grid;gap:4px}
@@ -247,6 +257,10 @@ details.foldCard[open] > summary{margin-bottom:12px}
           <div class="inputs three">
             <div class="field">
               <label for="salaryInputMode">給与入力方式</label>
+              <div class="chipRow" id="salaryModeChips" style="margin-bottom:8px">
+                <button class="chip" type="button" data-mode="monthly">月給モード</button>
+                <button class="chip" type="button" data-mode="hourly">時給モード</button>
+              </div>
               <select id="salaryInputMode">
                 <option value="monthly">月給から入力</option>
                 <option value="hourly">時給から入力</option>
@@ -464,6 +478,8 @@ details.foldCard[open] > summary{margin-bottom:12px}
           <span class="pill tagExpense">支出</span>
           <span class="pill tagIncome">収入</span>
           <span class="pill tagAuto">固定費</span>
+          <span class="pill" style="background:#eef0ff;border-color:#d8ddff;color:#5b67d8">休みに変更</span>
+          <span class="pill" style="background:#e9fbf2;border-color:#ccefdc;color:#14955b">出勤日に変更</span>
         </div>
       </section>
 
@@ -622,6 +638,13 @@ details.foldCard[open] > summary{margin-bottom:12px}
 
   function bindEvents(){
     el("saveSalarySettings").addEventListener("click", saveSettings);
+    document.querySelectorAll("#salaryModeChips .chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        el("salaryInputMode").value = btn.dataset.mode || "monthly";
+        updateSalaryModeUI();
+        render();
+      });
+    });
     el("salaryInputMode").addEventListener("change", () => { updateSalaryModeUI(); render(); });
     el("hourlyCalcMode").addEventListener("change", () => { updateSalaryModeUI(); render(); });
     el("dayModalClose").addEventListener("click", closeDayModal);
@@ -720,9 +743,16 @@ details.foldCard[open] > summary{margin-bottom:12px}
       root.appendChild(b);
     });
   }
+  function syncSalaryModeChips(){
+    const mode = el("salaryInputMode").value || "monthly";
+    document.querySelectorAll("#salaryModeChips .chip").forEach(btn => {
+      btn.classList.toggle("active", (btn.dataset.mode || "") === mode);
+    });
+  }
   function updateSalaryModeUI(){
     const hourly = (el("salaryInputMode").value || "monthly") === "hourly";
     const calcMode = el("hourlyCalcMode").value || "weekdays";
+    syncSalaryModeChips();
     document.querySelectorAll(".salaryModeMonthly").forEach(node => node.classList.toggle("hidden", hourly));
     document.querySelectorAll(".salaryModeHourly").forEach(node => node.classList.toggle("hidden", !hourly));
     document.querySelectorAll(".hourlyCalcMonthlyDays").forEach(node => node.classList.toggle("hidden", !hourly || calcMode !== "monthlyDays"));
@@ -1298,14 +1328,24 @@ function getDayOverride(date, cfg){
       const holidayInfo = isCurrent ? getJapanHolidayInfo(cellDate) : null;
       const holiday = !!holidayInfo;
       const holidayBadgeText = holidayInfo && holidayInfo.type === "substitute" ? "振替" : "祝";
+      const overrideType = isCurrent ? getDayOverride(cellDate, state) : "";
+      const overrideBadge = overrideType === "off"
+        ? '<span class="overrideBadge off">休</span>'
+        : overrideType === "work"
+          ? '<span class="overrideBadge work">勤</span>'
+          : '';
+      const titleParts = [];
+      if(holidayInfo) titleParts.push(holidayInfo.name);
+      if(overrideType === "off") titleParts.push("この日は休みに変更");
+      if(overrideType === "work") titleParts.push("この日は出勤日に変更");
       const dateKey = `${cellDate.getFullYear()}-${pad(cellDate.getMonth()+1)}-${pad(cellDate.getDate())}`;
       if(isCurrent) calendarDetailMap.set(dateKey, entries);
       const preview = entries.slice(0,2).map(e => {
         const m = categoryMeta(e.category), kind = e.kind === "income" ? "income" : e.kind === "auto" ? "auto" : "expense", sign = e.kind === "income" ? "+" : "-";
         return `<div class="dayEntry ${kind}">${m.icon} ${escapeHtml(e.name)} ${sign}${yen(e.amount)}</div>`;
       }).join("");
-      cells.push(`<div class="day ${muted ? "mutedCell" : ""} ${today ? "today" : ""} ${holiday ? "holiday" : ""}" ${isCurrent ? `data-date="${dateKey}"` : ""} ${holidayInfo ? `title="${escapeHtml(holidayInfo.name)}"` : ""}>
-        <div class="dayNum ${holiday ? "holiday" : ""}">${cellDate.getDate()} ${holiday ? `<span class="holidayBadge">${holidayBadgeText}</span>` : ''}</div>
+      cells.push(`<div class="day ${muted ? "mutedCell" : ""} ${today ? "today" : ""} ${holiday ? "holiday" : ""} ${overrideType === "off" ? "overrideOff" : ""} ${overrideType === "work" ? "overrideWork" : ""}" ${isCurrent ? `data-date="${dateKey}"` : ""} ${titleParts.length ? `title="${escapeHtml(titleParts.join(" / "))}"` : ""}>
+        <div class="dayNum ${holiday ? "holiday" : ""} ${overrideType === "off" ? "overrideOff" : ""} ${overrideType === "work" ? "overrideWork" : ""}">${cellDate.getDate()} ${holiday ? `<span class="holidayBadge">${holidayBadgeText}</span>` : ''} ${overrideBadge}</div>
         ${isCurrent && income ? `<div class="daySummary inc">+${yen(income)}</div>` : ""}
         ${isCurrent && expense ? `<div class="daySummary exp">-${yen(expense)}</div>` : ""}
         <div class="dayEntries">${preview}</div>
