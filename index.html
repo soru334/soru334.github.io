@@ -1041,10 +1041,6 @@ function autumnEquinoxDay(year){
   return Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
 }
 
-function holidayKey(year, month, day){
-  return `${year}-${pad(month+1)}-${pad(day)}`;
-}
-
 function japanBaseHolidayName(year, month, day){
   const m = month + 1;
   if(m === 1 && day === 1) return "元日";
@@ -1066,57 +1062,23 @@ function japanBaseHolidayName(year, month, day){
   return "";
 }
 
-const holidayCache = new Map();
-
-function buildJapanHolidaySet(year){
-  if(holidayCache.has(year)) return holidayCache.get(year);
-
-  const holidays = new Set();
-
-  // base holidays
-  for(let month=0; month<12; month++){
-    const last = lastDayOfMonth(year, month);
-    for(let day=1; day<=last; day++){
-      if(japanBaseHolidayName(year, month, day)){
-        holidays.add(holidayKey(year, month, day));
-      }
-    }
-  }
-
-  // citizen's holiday
-  for(let month=0; month<12; month++){
-    const last = lastDayOfMonth(year, month);
-    for(let day=2; day<last; day++){
-      const current = new Date(year, month, day);
-      const prevKey = holidayKey(current.getFullYear(), current.getMonth(), current.getDate()-1);
-      const nextKey = holidayKey(current.getFullYear(), current.getMonth(), current.getDate()+1);
-      const curKey = holidayKey(year, month, day);
-      if(current.getDay() !== 0 && current.getDay() !== 6 && !holidays.has(curKey) && holidays.has(prevKey) && holidays.has(nextKey)){
-        holidays.add(curKey);
-      }
-    }
-  }
-
-  // substitute holidays: when a holiday falls on Sunday, next non-holiday becomes substitute
-  const originalHolidayDates = Array.from(holidays).sort();
-  for(const key of originalHolidayDates){
-    const d = new Date(key + "T00:00:00");
-    if(d.getDay() === 0){
-      const sub = new Date(d);
-      do {
-        sub.setDate(sub.getDate() + 1);
-      } while(holidays.has(holidayKey(sub.getFullYear(), sub.getMonth(), sub.getDate())));
-      holidays.add(holidayKey(sub.getFullYear(), sub.getMonth(), sub.getDate()));
-    }
-  }
-
-  holidayCache.set(year, holidays);
-  return holidays;
-}
-
 function isJapanHoliday(date){
-  const holidays = buildJapanHolidaySet(date.getFullYear());
-  return holidays.has(holidayKey(date.getFullYear(), date.getMonth(), date.getDate()));
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  if(japanBaseHolidayName(year, month, day)) return true;
+
+  const prev = new Date(year, month, day - 1);
+  if(date.getDay() === 1 && japanBaseHolidayName(prev.getFullYear(), prev.getMonth(), prev.getDate())) return true;
+
+  const prev2 = new Date(year, month, day - 1);
+  const next2 = new Date(year, month, day + 1);
+  if(date.getDay() !== 0 && date.getDay() !== 6 &&
+     japanBaseHolidayName(prev2.getFullYear(), prev2.getMonth(), prev2.getDate()) &&
+     japanBaseHolidayName(next2.getFullYear(), next2.getMonth(), next2.getDate())) return true;
+
+  return false;
 }
 
 function getDayOverride(date, cfg){
