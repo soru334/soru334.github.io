@@ -1088,18 +1088,18 @@ function buildJapanHolidaySet(year){
     const last = lastDayOfMonth(year, month);
     for(let day=2; day<last; day++){
       const current = new Date(year, month, day);
-      const prev = holidayKey(current.getFullYear(), current.getMonth(), current.getDate()-1);
-      const next = holidayKey(current.getFullYear(), current.getMonth(), current.getDate()+1);
+      const prevKey = holidayKey(current.getFullYear(), current.getMonth(), current.getDate()-1);
+      const nextKey = holidayKey(current.getFullYear(), current.getMonth(), current.getDate()+1);
       const curKey = holidayKey(year, month, day);
-      if(current.getDay() !== 0 && current.getDay() !== 6 && !holidays.has(curKey) && holidays.has(prev) && holidays.has(next)){
+      if(current.getDay() !== 0 && current.getDay() !== 6 && !holidays.has(curKey) && holidays.has(prevKey) && holidays.has(nextKey)){
         holidays.add(curKey);
       }
     }
   }
 
-  // substitute holidays across long holiday chains
-  const holidayDates = Array.from(holidays).sort();
-  for(const key of holidayDates){
+  // substitute holidays: when a holiday falls on Sunday, next non-holiday becomes substitute
+  const originalHolidayDates = Array.from(holidays).sort();
+  for(const key of originalHolidayDates){
     const d = new Date(key + "T00:00:00");
     if(d.getDay() === 0){
       const sub = new Date(d);
