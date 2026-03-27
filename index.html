@@ -254,7 +254,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
             </div>
             <div class="field salaryModeMonthly">
               <label for="monthSalary">月給（円）</label>
-              <input id="monthSalary" inputmode="numeric" placeholder="例: 200000">
+              <input id="monthSalary" inputmode="numeric" placeholder="例: 172386">
             </div>
             <div class="field salaryModeHourly hidden">
               <label for="hourlyWage">時給（円）</label>
@@ -1304,7 +1304,7 @@ function getDayOverride(date, cfg){
       const today = isSameDay(cellDate, new Date());
       const holidayInfo = isCurrent ? getJapanHolidayInfo(cellDate) : null;
       const holiday = !!holidayInfo;
-      const holidayBadgeText = holidayInfo?.type === "substitute" ? "振替" : "祝";
+      const holidayBadgeText = holidayInfo && holidayInfo.type === "substitute" ? "振替" : "祝";
       const dateKey = `${cellDate.getFullYear()}-${pad(cellDate.getMonth()+1)}-${pad(cellDate.getDate())}`;
       if(isCurrent) calendarDetailMap.set(dateKey, entries);
       const preview = entries.slice(0,2).map(e => {
