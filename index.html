@@ -587,6 +587,43 @@ details.foldCard[open] > summary{margin-bottom:12px}
     </div>
   </div>
 
+  <div id="editModalBackdrop" class="modalBackdrop">
+    <div class="modal" style="max-width:560px">
+      <div class="modalHeader">
+        <div id="editModalTitle" class="modalTitle">入力を編集</div>
+        <button id="editModalClose" class="modalClose">×</button>
+      </div>
+      <div class="modalBody">
+        <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label class="label">名前</label>
+            <input id="editName" placeholder="例: 昼ごはん / 臨時収入">
+          </div>
+          <div>
+            <label class="label">カテゴリ</label>
+            <select id="editCategory"></select>
+          </div>
+          <div>
+            <label class="label">金額</label>
+            <input id="editAmount" type="number" inputmode="numeric" placeholder="0">
+          </div>
+          <div id="editDateWrap">
+            <label class="label">日時</label>
+            <input id="editDate" type="datetime-local">
+          </div>
+          <div id="editFixedDayWrap" class="hidden">
+            <label class="label">引き落とし日</label>
+            <select id="editFixedDay"></select>
+          </div>
+        </div>
+        <div id="editModalHelper" class="helper" style="margin-top:10px">金額の修正だけでも保存できます。</div>
+        <div class="actions" style="margin-top:16px;justify-content:flex-end">
+          <button class="ghost" id="editModalCancel">キャンセル</button>
+          <button class="primary" id="editModalSave">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
     <div class="footerNote">Safariで開いて「ホーム画面に追加」をすると、ホーム画面からすぐ開けます。</div>
   </div>
@@ -631,6 +668,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
   let annualCursorYear = new Date().getFullYear();
   let calendarDetailMap = new Map();
   let currentModalDateKey = "";
+  let currentEditTarget = null;
 
   const el = id => document.getElementById(id);
 
@@ -652,6 +690,10 @@ details.foldCard[open] > summary{margin-bottom:12px}
     el("summaryModalClose").addEventListener("click", closeSummaryModal);
     el("dayModalBackdrop").addEventListener("click", (e) => { if(e.target === el("dayModalBackdrop")) closeDayModal(); });
     el("summaryModalBackdrop").addEventListener("click", (e) => { if(e.target === el("summaryModalBackdrop")) closeSummaryModal(); });
+    el("editModalBackdrop").addEventListener("click", (e) => { if(e.target === el("editModalBackdrop")) closeEditModal(); });
+    el("editModalClose").addEventListener("click", closeEditModal);
+    el("editModalCancel").addEventListener("click", closeEditModal);
+    el("editModalSave").addEventListener("click", saveEditModal);
     el("modalSetOff").addEventListener("click", () => applyDayOverrideFromModal("off"));
     el("modalSetWork").addEventListener("click", () => applyDayOverrideFromModal("work"));
     el("modalClearOverride").addEventListener("click", () => applyDayOverrideFromModal("clear"));
@@ -705,8 +747,10 @@ details.foldCard[open] > summary{margin-bottom:12px}
   function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
   function fillSelects(){
-    el("payday").innerHTML = Array.from({length:28}, (_,i) => `<option value="${i+1}">${i+1}日</option>`).join("");
-    el("fixedDay").innerHTML = Array.from({length:28}, (_,i) => `<option value="${i+1}">${i+1}日</option>`).join("");
+    const dayOptions = Array.from({length:28}, (_,i) => `<option value="${i+1}">${i+1}日</option>`).join("");
+    el("payday").innerHTML = dayOptions;
+    el("fixedDay").innerHTML = dayOptions;
+    el("editFixedDay").innerHTML = dayOptions;
   }
   function hydrateInputs(){
     el("salaryInputMode").value = state.salaryInputMode || "monthly";
@@ -767,6 +811,21 @@ details.foldCard[open] > summary{margin-bottom:12px}
   }
   function renderDow(){
     el("calendarDow").innerHTML = DOW.map(d => `<div class="dow">${d}</div>`).join("");
+  }
+  function normalizeEntry(item){
+    const kind = item.kind || (item.type === "income" ? "income" : item.type === "expense" ? "expense" : "expense");
+    return { ...item, kind };
+  }
+  function getEditableCategoryNames(currentCategory){
+    return dedupe([currentCategory || "その他", "臨時収入", ...(state.categories || []), ...DEFAULT_CATEGORIES]);
+  }
+  function fillEditCategoryOptions(currentCategory){
+    const names = getEditableCategoryNames(currentCategory);
+    el("editCategory").innerHTML = names.map(name => {
+      const m = categoryMeta(name);
+      return `<option value="${escapeHtml(name)}">${m.icon} ${escapeHtml(name)}</option>`;
+    }).join("");
+    el("editCategory").value = currentCategory || names[0] || "その他";
   }
 
   function saveSettings(){
@@ -938,9 +997,9 @@ details.foldCard[open] > summary{margin-bottom:12px}
     const earnedToday = trackingStart ? accruedSalaryBetween(dayStart(now), now, state) : 0;
 
     const recurringBaseStart = trackingStart || new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    const autoEntriesAll = buildRecurringEntries(state.recurringExpenses, recurringBaseStart, now);
-    const manualEntries = [...state.transactions];
-    const allEntries = sortEntries([...manualEntries, ...autoEntriesAll]);
+    const autoEntriesAll = buildRecurringEntries(state.recurringExpenses, recurringBaseStart, now).map(normalizeEntry);
+    const manualEntries = state.transactions.map(normalizeEntry);
+    const allEntries = sortEntries([...manualEntries, ...autoEntriesAll].map(normalizeEntry));
 
     const manualExpenseTotal = sumAmount(manualEntries.filter(x => x.type === "expense"));
     const autoExpenseTotal = sumAmount(autoEntriesAll);
@@ -1269,11 +1328,13 @@ function getDayOverride(date, cfg){
             <div class="pill">${escapeHtml(item.category)} / 毎月${item.day}日</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
           <div class="amount red">-${yen(item.amount)}</div>
-          <button class="ghost">削除</button>
+          <button class="ghost editFixedBtn">編集</button>
+          <button class="ghost deleteFixedBtn">削除</button>
         </div>`;
-      div.querySelector("button").addEventListener("click", () => {
+      div.querySelector(".editFixedBtn").addEventListener("click", () => openEditRecurringModal(item.id));
+      div.querySelector(".deleteFixedBtn").addEventListener("click", () => {
         state.recurringExpenses = state.recurringExpenses.filter(x => x.id !== item.id);
         saveState(); render();
       });
@@ -1381,13 +1442,20 @@ function getDayOverride(date, cfg){
             </div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
           <div class="amount ${amountClass}">${sign}${yen(item.amount)}</div>
-          ${item.kind === "auto" ? "" : '<button class="ghost">削除</button>'}
+          ${item.kind === "auto"
+            ? '<button class="ghost historyEditAutoBtn">編集</button>'
+            : '<button class="ghost historyEditBtn">編集</button><button class="ghost historyDeleteBtn">削除</button>'}
         </div>`;
-      const btn = div.querySelector("button");
-      if(btn){
-        btn.addEventListener("click", () => {
+      if(item.kind === "auto"){
+        const editBtn = div.querySelector(".historyEditAutoBtn");
+        if(editBtn) editBtn.addEventListener("click", () => openEditRecurringModal(item.sourceRecurringId || item.id));
+      } else {
+        const editBtn = div.querySelector(".historyEditBtn");
+        const deleteBtn = div.querySelector(".historyDeleteBtn");
+        if(editBtn) editBtn.addEventListener("click", () => openEditTransactionModal(item.id));
+        if(deleteBtn) deleteBtn.addEventListener("click", () => {
           state.transactions = state.transactions.filter(x => x.id !== item.id);
           saveState(); render();
         });
@@ -1465,7 +1533,26 @@ function getOverrideStateText(dateKey){
               </div>
             </div>
           </div>
-          <div class="amount ${amountClass}">${sign}${yen(item.amount)}</div>`;
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+            <div class="amount ${amountClass}">${sign}${yen(item.amount)}</div>
+            ${item.kind === "auto"
+              ? '<button class="ghost dayEditAutoBtn">編集</button>'
+              : '<button class="ghost dayEditBtn">編集</button><button class="ghost dayDeleteBtn">削除</button>'}
+          </div>`;
+        if(item.kind === "auto"){
+          const editBtn = div.querySelector(".dayEditAutoBtn");
+          if(editBtn) editBtn.addEventListener("click", () => openEditRecurringModal(item.sourceRecurringId || item.id));
+        } else {
+          const editBtn = div.querySelector(".dayEditBtn");
+          const deleteBtn = div.querySelector(".dayDeleteBtn");
+          if(editBtn) editBtn.addEventListener("click", () => openEditTransactionModal(item.id));
+          if(deleteBtn) deleteBtn.addEventListener("click", () => {
+            state.transactions = state.transactions.filter(x => x.id !== item.id);
+            saveState();
+            render();
+            openDayModal(dateKey);
+          });
+        }
         el("dayModalList").appendChild(div);
       });
     }
@@ -1476,6 +1563,89 @@ function getOverrideStateText(dateKey){
     el("dayModalBackdrop").classList.remove("open");
   }
 
+  function openEditTransactionModal(id){
+    const item = state.transactions.find(x => x.id === id);
+    if(!item) return;
+    currentEditTarget = { kind: "transaction", id };
+    el("editModalTitle").textContent = item.type === "income" ? "収入を編集" : "支出を編集";
+    el("editName").value = item.name || "";
+    fillEditCategoryOptions(item.category || "その他");
+    el("editAmount").value = item.amount ?? "";
+    el("editDate").value = normalizeLocalDatetime(item.createdAt || nowLocalInputValue());
+    el("editDateWrap").classList.remove("hidden");
+    el("editFixedDayWrap").classList.add("hidden");
+    el("editModalHelper").textContent = "金額・名前・カテゴリ・日時を修正できます。";
+    el("editModalBackdrop").classList.add("open");
+  }
+
+  function openEditRecurringModal(id){
+    const item = state.recurringExpenses.find(x => x.id === id);
+    if(!item) return;
+    currentEditTarget = { kind: "recurring", id };
+    el("editModalTitle").textContent = "固定費を編集";
+    el("editName").value = item.name || "";
+    fillEditCategoryOptions(item.category || "固定費");
+    el("editAmount").value = item.amount ?? "";
+    el("editFixedDay").value = item.day ?? 1;
+    el("editDateWrap").classList.add("hidden");
+    el("editFixedDayWrap").classList.remove("hidden");
+    el("editModalHelper").textContent = "金額・名前・カテゴリ・毎月の引き落とし日を修正できます。";
+    el("editModalBackdrop").classList.add("open");
+  }
+
+  function closeEditModal(){
+    currentEditTarget = null;
+    el("editModalBackdrop").classList.remove("open");
+  }
+
+  function saveEditModal(){
+    if(!currentEditTarget) return;
+    const amount = parseNumber(el("editAmount").value, 0);
+    if(!(amount > 0)){
+      alert("金額は1円以上で入力してください。");
+      return;
+    }
+    const name = String(el("editName").value || "").trim() || (currentEditTarget.kind === "recurring" ? "固定費" : "入力");
+    const category = String(el("editCategory").value || "").trim() || "その他";
+    addCategoryIfNeeded(category);
+    if(currentEditTarget.kind === "transaction"){
+      const idx = state.transactions.findIndex(x => x.id === currentEditTarget.id);
+      if(idx < 0) return;
+      const dateValue = el("editDate").value || nowLocalInputValue();
+      state.transactions[idx] = {
+        ...state.transactions[idx],
+        name,
+        category,
+        amount,
+        createdAt: new Date(dateValue).toISOString()
+      };
+      const shouldReopenDayModal = el("dayModalBackdrop").classList.contains("open");
+      const reopenDateKey = dateKeyLocal(new Date(state.transactions[idx].createdAt));
+      saveState();
+      renderCategoryOptions();
+      render();
+      closeEditModal();
+      if(shouldReopenDayModal) openDayModal(reopenDateKey);
+      return;
+    }
+    const idx = state.recurringExpenses.findIndex(x => x.id === currentEditTarget.id);
+    if(idx < 0) return;
+    state.recurringExpenses[idx] = {
+      ...state.recurringExpenses[idx],
+      name,
+      category,
+      amount,
+      day: parseInt(el("editFixedDay").value, 10) || 1
+    };
+    const shouldReopenDayModal = el("dayModalBackdrop").classList.contains("open");
+    const reopenDateKey = currentModalDateKey;
+    saveState();
+    renderCategoryOptions();
+    render();
+    closeEditModal();
+    if(shouldReopenDayModal && reopenDateKey) openDayModal(reopenDateKey);
+  }
+
   function buildRecurringEntries(recurring, start, now){
     const out = [];
     recurring.forEach(item => {
@@ -1483,7 +1653,7 @@ function getOverrideStateText(dateKey){
         const day = Math.min(item.day, lastDayOfMonth(y,m));
         const date = new Date(y,m,day,0,0,0,0);
         if(date >= start && date <= now){
-          out.push({ id:`${item.id}_${y}_${m}_${day}`, kind:"auto", type:"expense", category:item.category, name:item.name, amount:item.amount, createdAt:date.toISOString() });
+          out.push({ id:`${item.id}_${y}_${m}_${day}`, sourceRecurringId:item.id, kind:"auto", type:"expense", category:item.category, name:item.name, amount:item.amount, createdAt:date.toISOString() });
         }
       });
     });
