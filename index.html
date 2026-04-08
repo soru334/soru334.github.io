@@ -1019,17 +1019,21 @@ details.foldCard[open] > summary{margin-bottom:12px}
     const earnedToday = trackingStart ? accruedSalaryBetween(dayStart(now), now, state) : 0;
 
     const recurringBaseStart = trackingStart || new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    const autoEntriesAll = buildRecurringEntries(state.recurringExpenses, recurringBaseStart, now).map(normalizeEntry);
+    const recurringBudgetEnd = endOfMonthDate(now);
+    const recurringCalendarEnd = calendarCursor > recurringBudgetEnd ? endOfMonthDate(calendarCursor) : recurringBudgetEnd;
+    const autoEntriesBudget = buildRecurringEntries(state.recurringExpenses, recurringBaseStart, recurringBudgetEnd).map(normalizeEntry);
+    const autoEntriesCalendar = buildRecurringEntries(state.recurringExpenses, recurringBaseStart, recurringCalendarEnd).map(normalizeEntry);
     const manualEntries = state.transactions.map(normalizeEntry);
-    const allEntries = sortEntries([...manualEntries, ...autoEntriesAll].map(normalizeEntry));
+    const summaryEntries = sortEntries([...manualEntries, ...autoEntriesBudget].map(normalizeEntry));
+    const calendarEntries = sortEntries([...manualEntries, ...autoEntriesCalendar].map(normalizeEntry));
 
     const manualExpenseTotal = sumAmount(manualEntries.filter(x => x.type === "expense"));
-    const autoExpenseTotal = sumAmount(autoEntriesAll);
+    const autoExpenseTotal = sumAmount(autoEntriesBudget);
     const manualIncomeTotal = sumAmount(manualEntries.filter(x => x.type === "income"));
     const bankBalance = bankStartBalance + totalEarned + manualIncomeTotal - manualExpenseTotal - autoExpenseTotal;
 
     const monthEntriesManual = manualEntries.filter(x => isSameMonth(new Date(x.createdAt), now));
-    const monthEntriesAuto = autoEntriesAll.filter(x => isSameMonth(new Date(x.createdAt), now));
+    const monthEntriesAuto = autoEntriesBudget.filter(x => isSameMonth(new Date(x.createdAt), now));
     const spentThisMonth = sumAmount(monthEntriesManual.filter(x => x.type === "expense")) + sumAmount(monthEntriesAuto);
 
     const currentYearSalary = resolveCurrentYearSalaryForSummary(now, state);
@@ -1042,7 +1046,7 @@ details.foldCard[open] > summary{margin-bottom:12px}
       annualSalary = currentYearSalary;
     }
     const annualManual = manualEntries.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
-    const annualAuto = autoEntriesAll.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
+    const annualAuto = autoEntriesBudget.filter(x => { const d = new Date(x.createdAt); return d.getFullYear() === annualCursorYear; });
     const annualExtraIncome = sumAmount(annualManual.filter(x => x.type === "income"));
     const annualExpense = sumAmount(annualManual.filter(x => x.type === "expense")) + sumAmount(annualAuto);
     const annualNet = annualSalary + annualExtraIncome - annualExpense;
@@ -1103,9 +1107,9 @@ details.foldCard[open] > summary{margin-bottom:12px}
     el("annualNet").className = "v small " + (annualNet < 0 ? "red" : "green");
 
     renderFixedList();
-    renderCategorySummary(allEntries, now);
-    renderCalendar(allEntries, calendarCursor);
-    renderHistory(allEntries);
+    renderCategorySummary(summaryEntries, now);
+    renderCalendar(calendarEntries, calendarCursor);
+    renderHistory(summaryEntries);
   }
 
   function formatWorkDays(days){ return Array.isArray(days) && days.length ? days.slice().sort((a,b)=>a-b).map(d => DOW[d]).join("・") : "未設定"; }
@@ -1707,6 +1711,7 @@ function getOverrideStateText(dateKey){
   function isSameMonth(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth(); }
   function isSameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
   function finiteDate(d, fallback){ return d instanceof Date && !Number.isNaN(d.getTime()) ? d : fallback; }
+  function endOfMonthDate(d){ return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999); }
   function parseNumber(value, fallback=0){ const n = Number(String(value ?? "").replace(/[^\d.-]/g, "")); return Number.isFinite(n) ? n : fallback; }
   function nullableNumber(value){
     const cleaned = String(value ?? "").replace(/[^\d.-]/g, "");
